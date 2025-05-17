@@ -24,7 +24,6 @@ const filterByDateRange = (data, start, end) => {
 const Dashboard = () => {
   const [buyData, setBuyData] = useState([]);
   const [sellData, setSellData] = useState([]);
-  const [returnData, setReturnData] = useState([]); // New state for returned tyres
   const [stockSummary, setStockSummary] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState("");
   const [brandOptions, setBrandOptions] = useState([]);
@@ -44,16 +43,9 @@ const Dashboard = () => {
       setSellData(sellList);
     });
 
-    // Add listener for returnedTyres
-    const returnUnsub = onSnapshot(collection(db, "returnedTyres"), (snapshot) => {
-      const returnList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setReturnData(returnList);
-    });
-
     return () => {
       buyUnsub();
       sellUnsub();
-      returnUnsub();
     };
   }, []);
 
@@ -126,22 +118,6 @@ const Dashboard = () => {
       stock: Math.max(item.bought - item.sold, 0),
     }));
 
-    // Adjust stock for returns
-    returnData.forEach(returnItem => {
-      summary = summary.map(item => {
-        if (
-          item.company === returnItem.company &&
-          item.brand === returnItem.brand &&
-          item.size === returnItem.size &&
-          item.model === returnItem.model
-        ) {
-          const adjustedStock = Math.max(item.stock - (parseInt(returnItem.returnQuantity, 10) || 0), 0);
-          return { ...item, stock: adjustedStock };
-        }
-        return item;
-      });
-    });
-
     // Apply advanced search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -154,7 +130,7 @@ const Dashboard = () => {
     }
 
     setStockSummary(summary);
-  }, [buyData, sellData, returnData, selectedBrand, startDate, endDate, selectedDate, searchQuery]); // Added returnData to dependencies
+  }, [buyData, sellData, selectedBrand, startDate, endDate, selectedDate, searchQuery]);
 
   const totalBought = stockSummary.reduce((sum, item) => sum + item.bought, 0);
   const totalSold = stockSummary.reduce((sum, item) => sum + item.sold, 0);
