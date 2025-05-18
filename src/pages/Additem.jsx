@@ -10,6 +10,20 @@ import {
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 
+// Add new imports for date picker
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { CalendarIcon } from "@heroicons/react/24/outline";
+
+// Add helper function for date range filtering
+const filterByDateRange = (data, start, end) => {
+  if (!start || !end) return data;
+  return data.filter(item => {
+    const itemDate = new Date(item.date);
+    return itemDate >= start && itemDate <= end;
+  });
+};
+
 const AddItem = () => {
   const [form, setForm] = useState({
     company: "",
@@ -25,12 +39,20 @@ const AddItem = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [purchasedTyres, setPurchasedTyres] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Add state for date range
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   useEffect(() => {
     const fetchLocalTyres = async () => {
       try {
         const snapshot = await getDocs(collection(db, "addItemTyres"));
-        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        // Add date range filtering
+        data = filterByDateRange(data, startDate, endDate);
         setLocalTyres(data);
       } catch (error) {
         console.error("Error fetching local tyres:", error);
@@ -50,68 +72,68 @@ const AddItem = () => {
 
     fetchLocalTyres();
     fetchPurchasedTyres();
-  }, []);
+  }, [startDate, endDate]); // Add dependencies for date range
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  if (name === "company") {
-    setForm({
-      company: value,
-      brand: "",
-      model: "",
-      size: "",
-      price: "",
-      quantity: "",
-      date: new Date().toISOString().split("T")[0],
-    });
-    return;
-  }
-
-  if (name === "brand") {
-    setForm({
-      ...form,
-      brand: value,
-      model: "",
-      size: "",
-      price: "",
-      quantity: "",
-    });
-    return;
-  }
-
-  if (name === "model") {
-    setForm({
-      ...form,
-      model: value,
-      size: "",
-      price: "",
-      quantity: "",
-    });
-    return;
-  }
-
-  const updatedForm = { ...form, [name]: value };
-
-  if (name === "size") {
-    const matched = purchasedTyres.find(
-      (t) =>
-        t.company?.toLowerCase() === form.company?.toLowerCase() &&
-        t.brand?.toLowerCase() === form.brand?.toLowerCase() &&
-        t.model?.toLowerCase() === form.model?.toLowerCase() &&
-        t.size?.toLowerCase() === value.toLowerCase()
-    );
-    if (matched) {
-      updatedForm.price = matched.price?.toString() || "";
-      updatedForm.quantity = matched.quantity?.toString() || "";
-    } else {
-      updatedForm.price = "";
-      updatedForm.quantity = "";
+    if (name === "company") {
+      setForm({
+        company: value,
+        brand: "",
+        model: "",
+        size: "",
+        price: "",
+        quantity: "",
+        date: new Date().toISOString().split("T")[0],
+      });
+      return;
     }
-  }
 
-  setForm(updatedForm);
-};
+    if (name === "brand") {
+      setForm({
+        ...form,
+        brand: value,
+        model: "",
+        size: "",
+        price: "",
+        quantity: "",
+      });
+      return;
+    }
+
+    if (name === "model") {
+      setForm({
+        ...form,
+        model: value,
+        size: "",
+        price: "",
+        quantity: "",
+      });
+      return;
+    }
+
+    const updatedForm = { ...form, [name]: value };
+
+    if (name === "size") {
+      const matched = purchasedTyres.find(
+        (t) =>
+          t.company?.toLowerCase() === form.company?.toLowerCase() &&
+          t.brand?.toLowerCase() === form.brand?.toLowerCase() &&
+          t.model?.toLowerCase() === form.model?.toLowerCase() &&
+          t.size?.toLowerCase() === value.toLowerCase()
+      );
+      if (matched) {
+        updatedForm.price = matched.price?.toString() || "";
+        updatedForm.quantity = matched.quantity?.toString() || "";
+      } else {
+        updatedForm.price = "";
+        updatedForm.quantity = "";
+      }
+    }
+
+    setForm(updatedForm);
+  };
 
   const getCompanyOptions = () =>
     [...new Set(purchasedTyres.map((t) => t.company))].filter(Boolean);
@@ -162,7 +184,6 @@ const AddItem = () => {
       ),
     ].filter(Boolean);
   };
-
 
   const handleSubmit = async () => {
     const brandExists = purchasedTyres.some(
@@ -266,6 +287,14 @@ const AddItem = () => {
       tyre.price?.toString().includes(search)
     );
   });
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTyres.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTyres.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -372,31 +401,62 @@ const AddItem = () => {
 
       <button
         onClick={handleSubmit}
-        className={`text-white px-6 py-2 rounded shadow ${selectedId ? "bg-yellow-600 hover:bg-yellow-700" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+        className={`text-white px-6 py-2 rounded shadow ${selectedId ? "bg-yellow-600 hover:bg-yellow-700" : "bg-blue-600 hover:bg-blue-700"}`}
       >
         {selectedId ? "Update Tyre" : "Add Tyre"}
       </button>
 
-      <div className="mt-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by brand, model, size, price, quantity, date..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="border px-4 py-2 rounded w-full"
+          className="border rounded p-2 mt-5"
         />
+        {/* Add date range picker UI */}
+        <div className="flex gap-2 mt-4">
+          <div className="relative">
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Start Date"
+              className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dateFormat="dd/MM/yyyy"
+              isClearable
+            />
+            <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+          <div className="relative">
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              placeholderText="End Date"
+              className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dateFormat="dd/MM/yyyy"
+              isClearable
+            />
+            <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+        </div>
       </div>
 
       <h3 className="text-xl font-semibold mt-8 mb-4">Tyres List (Private)</h3>
-      {filteredTyres.length === 0 ? (
+      {currentItems.length === 0 ? (
         <p>No items found.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border rounded">
             <thead>
               <tr className="bg-gray-100 text-left">
-                <th className="py-2 px-4 border">Compnay</th>
+                <th className="py-2 px-4 border">Company</th>
                 <th className="py-2 px-4 border">Brand</th>
                 <th className="py-2 px-4 border">Model</th>
                 <th className="py-2 px-4 border">Size</th>
@@ -407,7 +467,7 @@ const AddItem = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTyres.map((tyre) => (
+              {currentItems.map((tyre) => (
                 <tr key={tyre.id} className="hover:bg-gray-50">
                   <td className="py-2 px-4 border">{tyre.company}</td>
                   <td className="py-2 px-4 border">{tyre.brand}</td>
@@ -434,6 +494,18 @@ const AddItem = () => {
               ))}
             </tbody>
           </table>
+          {/* Pagination */}
+          <div className="p-4 flex justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={`px-3 py-1 rounded ${currentPage === number ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              >
+                {number}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

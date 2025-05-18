@@ -1,5 +1,3 @@
-// SELLTYRE.JSX
-
 import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import {
@@ -12,6 +10,19 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+// Add new imports for date picker
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { CalendarIcon } from "@heroicons/react/24/outline";
+
+// Add helper function for date range filtering
+const filterByDateRange = (data, start, end) => {
+  if (!start || !end) return data;
+  return data.filter(item => {
+    const itemDate = new Date(item.date);
+    return itemDate >= start && itemDate <= end;
+  });
+};
 
 const SellTyre = () => {
   const [form, setForm] = useState({
@@ -22,6 +33,7 @@ const SellTyre = () => {
     price: "",
     quantity: "",
     date: new Date().toISOString().split("T")[0],
+    discount: 0, // New discount field
   });
 
   const printRef = useRef();
@@ -36,24 +48,31 @@ const SellTyre = () => {
   const [availableModels, setAvailableModels] = useState([]);
   const [viewTyre, setViewTyre] = useState(null);
   const [availableSizes, setAvailableSizes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
+  // Add state for date range
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   const handlePrint = () => {
     if (printRef.current) {
       const printContents = printRef.current.innerHTML;
       const win = window.open("", "", "height=600,width=800");
-      win.document.write("<html><head><title>Print</title></head><body>");
+      win.document.write("");
       win.document.write(printContents);
-      win.document.write("</body></html>");
+      win.document.write("");
       win.document.close();
       win.print();
     }
   };
 
-
   useEffect(() => {
     const unsubSell = onSnapshot(collection(db, "soldTyres"), (snapshot) => {
-      setSellTyres(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      // Add date range filtering
+      data = filterByDateRange(data, startDate, endDate);
+      setSellTyres(data);
     });
 
     const fetchItemTyres = async () => {
@@ -66,7 +85,7 @@ const SellTyre = () => {
 
     fetchItemTyres();
     return () => unsubSell();
-  }, []);
+  }, [startDate, endDate]); // Add dependencies for date range
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -82,6 +101,7 @@ const SellTyre = () => {
       price: "",
       quantity: "",
       date: new Date().toISOString().split("T")[0],
+      discount: 0,
     });
 
     const brands = itemTyres
@@ -111,6 +131,7 @@ const SellTyre = () => {
       price: "",
       quantity: "",
       date: new Date().toISOString().split("T")[0],
+      discount: 0,
     }));
 
     const models = itemTyres
@@ -212,10 +233,14 @@ const SellTyre = () => {
       return;
     }
 
+    const originalPrice = parseFloat(form.price);
+    const discount = parseFloat(form.discount) || 0;
+    const discountedPrice = originalPrice - (originalPrice * (discount / 100));
+
     const newTyre = {
       ...form,
       customerName: customerName || "N/A",
-      price: parseFloat(form.price),
+      price: discountedPrice, // Store discounted price
       quantity: enteredQty,
       status: "Sold",
       createdAt: new Date(),
@@ -239,6 +264,7 @@ const SellTyre = () => {
         price: "",
         quantity: "",
         date: new Date().toISOString().split("T")[0],
+        discount: 0,
       });
       setCustomerName("");
       setAvailableBrands([]);
@@ -256,83 +282,76 @@ const SellTyre = () => {
     )
   );
 
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTyres.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTyres.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <h2 className="text-3xl font-bold text-gray-800 mb-6">🛒 Sell Tyre</h2>
 
+      {/* Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div>
-          <input
-            type="text"
-            placeholder="Customer Name"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <input
-            list="company-list"
-            name="company"
-            placeholder="Company"
-            value={form.company}
-            onChange={handleCompanyChange}
-            className="border border-gray-300 rounded px-4 py-2 w-full"
-          />
-          <datalist id="company-list">
-            {availableCompanies.map((company, idx) => (
-              <option key={idx} value={company} />
-            ))}
-          </datalist>
-        </div>
+        <input
+          type="text"
+          name="customerName"
+          placeholder="Customer Name"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
 
-        <div>
-          <input
-            list="brand-list"
-            name="brand"
-            placeholder="Brand"
-            value={form.brand}
-            onChange={handleBrandChange}
-            className="border border-gray-300 rounded px-4 py-2 w-full"
-          />
-          <datalist id="brand-list">
-            {availableBrands.map((brand, idx) => (
-              <option key={idx} value={brand} />
-            ))}
-          </datalist>
-        </div>
+        <select
+          name="company"
+          value={form.company}
+          onChange={handleCompanyChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        >
+          <option value="">Select Company</option>
+          {availableCompanies.map((company, idx) => (
+            <option key={idx} value={company}>{company}</option>
+          ))}
+        </select>
 
-        <div>
-          <select
-            name="model"
-            value={form.model}
-            onChange={handleModelChange}
-            className="border border-gray-300 rounded px-4 py-2 w-full"
-          >
-            <option value="">Select Model</option>
-            {availableModels.map((model, idx) => (
-              <option key={idx} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          name="brand"
+          value={form.brand}
+          onChange={handleBrandChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        >
+          <option value="">Select Brand</option>
+          {availableBrands.map((brand, idx) => (
+            <option key={idx} value={brand}>{brand}</option>
+          ))}
+        </select>
 
-        <div>
-          <select
-            name="size"
-            value={form.size}
-            onChange={handleSizeChange}
-            className="border border-gray-300 rounded px-4 py-2 w-full"
-          >
-            <option value="">Select Size</option>
-            {availableSizes.map((size, idx) => (
-              <option key={idx} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          name="model"
+          value={form.model}
+          onChange={handleModelChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        >
+          <option value="">Select Model</option>
+          {availableModels.map((model, idx) => (
+            <option key={idx} value={model}>{model}</option>
+          ))}
+        </select>
+
+        <select
+          name="size"
+          value={form.size}
+          onChange={handleSizeChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        >
+          <option value="">Select Size</option>
+          {availableSizes.map((size, idx) => (
+            <option key={idx} value={size}>{size}</option>
+          ))}
+        </select>
 
         <input
           type="number"
@@ -340,48 +359,94 @@ const SellTyre = () => {
           placeholder="Price"
           value={form.price}
           readOnly
-          className="border border-gray-300 rounded px-4 py-2 w-full"
+          className="border border-gray-300 p-2 rounded w-full"
         />
+
         <input
           type="number"
           name="quantity"
           placeholder="Quantity"
           value={form.quantity}
           onChange={handleChange}
-          className="border border-gray-300 rounded px-4 py-2 w-full"
+          className="border border-gray-300 p-2 rounded w-full"
         />
+
         <input
           type="date"
           name="date"
           value={form.date}
           onChange={handleChange}
-          className="border border-gray-300 rounded px-4 py-2 w-full"
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+
+        <input
+          type="number"
+          name="discount"
+          placeholder="Discount (%)"
+          value={form.discount}
+          onChange={handleChange}
+          className="border border-gray-300 p-2 rounded w-full"
+          min="0"
+          max="100"
         />
       </div>
 
       <button
         onClick={handleSellTyre}
-        className={`px-6 py-2 font-medium rounded shadow text-white ${editId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+        className={`px-6 py-2 font-medium rounded shadow text-white ${editId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-600 hover:bg-blue-700"}`}
       >
         {editId ? "Update Tyre" : "Sell Tyre"}
       </button>
 
-      <div className="mt-10">
+      {/* Search */}
+      <div className="mt-10 flex justify-between items-center">
         <input
           type="text"
-          placeholder="🔍 Search sold tyres..."
+          placeholder="🔍 Search by brand, size, etc."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded shadow-sm mb-6"
+          className=" p-3 border border-gray-300 rounded shadow-sm mb-6"
         />
+        {/* Add date range picker UI */}
+        <div className="flex gap-2 mb-4">
+          <div className="relative">
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Start Date"
+              className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dateFormat="dd/MM/yyyy"
+              isClearable
+            />
+            <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+          <div className="relative">
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              placeholderText="End Date"
+              className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dateFormat="dd/MM/yyyy"
+              isClearable
+            />
+            <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+        </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left border-collapse bg-white rounded shadow overflow-hidden">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
-              <th className="p-3">Coustmer</th>
+              <th className="p-3">Customer</th>
               <th className="p-3">Company</th>
               <th className="p-3">Brand</th>
               <th className="p-3">Model</th>
@@ -389,28 +454,39 @@ const SellTyre = () => {
               <th className="p-3">Price</th>
               <th className="p-3">Quantity</th>
               <th className="p-3">Total Price</th>
+              <th className="p-3">Discount</th>
               <th className="p-3">Date</th>
               <th className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredTyres.length > 0 ? (
-              filteredTyres.map((tyre) => (
+            {currentItems.length > 0 ? (
+              currentItems.map((tyre) => (
                 <tr key={tyre.id} className="hover:bg-gray-50 transition">
                   <td className="p-3">{tyre.customerName || 'N/A'}</td>
                   <td className="p-3">{tyre.company}</td>
                   <td className="p-3">{tyre.brand}</td>
                   <td className="p-3">{tyre.model}</td>
                   <td className="p-3">{tyre.size}</td>
-                  <td className="p-3">Rs. {tyre.price}</td>
+                  <td className="p-3">Rs. {tyre.price.toFixed(2)}</td>
                   <td className="p-3">{tyre.quantity}</td>
-                  <td className="p-3">Rs. {tyre.price * tyre.quantity}</td>
+                  <td className="p-3 text-blue-700 font-semibold">Rs. {(tyre.price * tyre.quantity).toLocaleString()}</td>
+                  <td className="p-3">{tyre.discount || 0}%</td>
                   <td className="p-3">{tyre.date}</td>
-
-                  <td className="p-3">
+                  <td className="p-3 flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setForm(tyre);
+                        setEditId(tyre.id);
+                        setCustomerName(tyre.customerName || '');
+                      }}
+                      className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
+                    >
+                      ✏️ Edit
+                    </button>
                     <button
                       onClick={() => setViewTyre(tyre)}
-                      className="text-blue-600 hover:underline"
+                      className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
                     >
                       View
                     </button>
@@ -419,75 +495,84 @@ const SellTyre = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center p-6 text-gray-500">
+                <td colSpan="11" className="text-center p-6 text-gray-500">
                   No tyres sold yet.
                 </td>
               </tr>
             )}
-            {viewTyre && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div ref={printRef} className="bg-white p-8 rounded-xl shadow-2xl max-w-4xl w-full">
-                  <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <div className="flex items-center space-x-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 5h2v6h-2zm0 8h2v2h-2z" />
-                      </svg>
-                      <h2 className="text-3xl font-extrabold text-gray-800">Invoice</h2>
-                    </div>
-                    <p className="text-sm text-gray-600">Date: {viewTyre.date}</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    {/* Left Side: Tyre Info */}
-                    <div>
-                      <p className="font-semibold text-lg text-gray-700 mb-2">Tyre Information</p>
-                      <div className="space-y-2">
-                        <p><strong className="text-gray-800">Company:</strong> {viewTyre.company}</p>
-                        <p><strong className="text-gray-800">Brand:</strong> {viewTyre.brand}</p>
-                        <p><strong className="text-gray-800">Model:</strong> {viewTyre.model}</p>
-                        <p><strong className="text-gray-800">Size:</strong> {viewTyre.size}</p>
-                      </div>
-                    </div>
-
-                    {/* Right Side: Pricing Info */}
-                    <div>
-                      <p className="font-semibold text-lg text-gray-700 mb-2">Pricing Details</p>
-                      <div className="space-y-2">
-                        <p><strong className="text-gray-800">Customer:</strong>{viewTyre.customerName}</p>
-                        <p><strong className="text-gray-800">Price per Unit:</strong> Rs. {viewTyre.price}</p>
-                        <p><strong className="text-gray-800">Quantity:</strong> {viewTyre.quantity}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Section */}
-                  <div className="bg-gray-50 p-6 rounded-lg shadow-md mb-8">
-                    <div className="flex justify-between items-center">
-                      <p className="font-semibold text-xl text-gray-800"><p><strong className="text-gray-800">Total :</strong> Rs. {viewTyre.price * viewTyre.quantity}</p></p>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-between items-center print:hidden">
-                    <button
-                      onClick={() => setViewTyre(null)}
-                      className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={handlePrint}
-                      className="px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Print Invoice
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </tbody>
         </table>
+        {/* Pagination */}
+        <div className="p-4 flex justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`px-3 py-1 rounded ${currentPage === number ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+            >
+              {number}
+            </button>
+          ))}
+        </div>
       </div>
+      {viewTyre && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+          <div ref={printRef} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none">
+            <header className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+              <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+                <span role="img" aria-label="Invoice">🧾</span> Invoice
+              </h2>
+              <p className="text-sm text-gray-500 print:hidden">Date: <time>{viewTyre.date}</time></p>
+            </header>
+
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-gray-700 text-sm leading-relaxed mb-8">
+              <div>
+                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Customer Details</h3>
+                <p><span className="font-medium text-gray-800">Customer:</span> {viewTyre.customerName}</p>
+                <p><span className="font-medium text-gray-800">Company:</span> {viewTyre.company}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Tyre Details</h3>
+                <p><span className="font-medium text-gray-800">Brand:</span> {viewTyre.brand}</p>
+                <p><span className="font-medium text-gray-800">Model:</span> {viewTyre.model}</p>
+                <p><span className="font-medium text-gray-800">Size:</span> {viewTyre.size}</p>
+              </div>
+            </section>
+
+            <section className="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
+              <h3 className="font-semibold text-lg mb-4 text-gray-900 border-b border-gray-300 pb-2">Pricing Details</h3>
+              <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-gray-700 text-sm">
+                <dt className="font-medium">Price per Unit:</dt>
+                <dd>Rs. {viewTyre.price.toFixed(2)}</dd>
+                <dt className="font-medium">Quantity:</dt>
+                <dd>{viewTyre.quantity}</dd>
+                <dt className="font-medium">Discount:</dt>
+                <dd>{viewTyre.discount || 0}%</dd>
+                <dt className="font-bold text-lg">Total:</dt>
+                <dd className="font-bold text-lg">Rs. {(viewTyre.price * viewTyre.quantity).toLocaleString()}</dd>
+              </dl>
+            </section>
+
+            <footer className="flex justify-between items-center text-gray-600 text-sm print:hidden">
+              <p>Status: <span className="font-semibold text-green-600">Sold</span></p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePrint}
+                  className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                >
+                  Print Invoice
+                </button>
+                <button
+                  onClick={() => setViewTyre(null)}
+                  className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

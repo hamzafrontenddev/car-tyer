@@ -24,6 +24,7 @@ const filterByDateRange = (data, start, end) => {
 const Dashboard = () => {
   const [buyData, setBuyData] = useState([]);
   const [sellData, setSellData] = useState([]);
+  const [returnData, setReturnData] = useState([]); // State for returned tyres
   const [stockSummary, setStockSummary] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState("");
   const [brandOptions, setBrandOptions] = useState([]);
@@ -31,6 +32,8 @@ const Dashboard = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const buyUnsub = onSnapshot(collection(db, "purchasedTyres"), (snapshot) => {
@@ -43,9 +46,15 @@ const Dashboard = () => {
       setSellData(sellList);
     });
 
+    const returnUnsub = onSnapshot(collection(db, "returnedTyres"), (snapshot) => {
+      const returnList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setReturnData(returnList);
+    });
+
     return () => {
       buyUnsub();
       sellUnsub();
+      returnUnsub();
     };
   }, []);
 
@@ -57,36 +66,40 @@ const Dashboard = () => {
   useEffect(() => {
     let filteredBuy = [...buyData];
     let filteredSell = [...sellData];
+    let filteredReturns = [...returnData];
 
     if (startDate && endDate) {
       filteredBuy = filterByDateRange(filteredBuy, startDate, endDate);
       filteredSell = filterByDateRange(filteredSell, startDate, endDate);
+      filteredReturns = filterByDateRange(filteredReturns, startDate, endDate);
     }
 
     if (selectedDate) {
       filteredBuy = filteredBuy.filter(item => {
         const itemDate = new Date(item.date);
-        return (
-          itemDate.toDateString() === new Date(selectedDate).toDateString()
-        );
+        return itemDate.toDateString() === new Date(selectedDate).toDateString();
       });
       filteredSell = filteredSell.filter(item => {
         const itemDate = new Date(item.date);
-        return (
-          itemDate.toDateString() === new Date(selectedDate).toDateString()
-        );
+        return itemDate.toDateString() === new Date(selectedDate).toDateString();
+      });
+      filteredReturns = filteredReturns.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate.toDateString() === new Date(selectedDate).toDateString();
       });
     }
 
     if (selectedBrand) {
       filteredBuy = filteredBuy.filter(item => item.brand === selectedBrand);
       filteredSell = filteredSell.filter(item => item.brand === selectedBrand);
+      filteredReturns = filteredReturns.filter(item => item.brand === selectedBrand);
     }
 
     const map = new Map();
 
+    // Process purchased tyres (bought)
     filteredBuy.forEach((item) => {
-      const key = `${item.company}_${item.brand}_${item.size}_${item.model || "N/A"}`;
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
         company: item.company || "N/A",
         brand: item.brand,
@@ -94,13 +107,15 @@ const Dashboard = () => {
         model: item.model || "N/A",
         bought: 0,
         sold: 0,
+        returned: 0,
       };
       entry.bought += parseInt(item.quantity, 10) || 0;
       map.set(key, entry);
     });
 
+    // Process sold tyres
     filteredSell.forEach((item) => {
-      const key = `${item.company}_${item.brand}_${item.size}_${item.model || "N/A"}`;
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
         company: item.company || "N/A",
         brand: item.brand,
@@ -108,8 +123,26 @@ const Dashboard = () => {
         model: item.model || "N/A",
         bought: 0,
         sold: 0,
+        returned: 0,
       };
       entry.sold += parseInt(item.quantity, 10) || 0;
+      map.set(key, entry);
+    });
+
+    // Process returned tyres
+    filteredReturns.forEach((item) => {
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
+      const entry = map.get(key) || {
+        company: item.company || "N/A",
+        brand: item.brand,
+        size: item.size,
+        model: item.model || "N/A",
+        bought: 0,
+        sold: 0,
+        returned: 0,
+      };
+      entry.returned += parseInt(item.returnQuantity, 10) || 0;
+      entry.sold = Math.max(entry.sold - entry.returned, 0);
       map.set(key, entry);
     });
 
@@ -118,7 +151,6 @@ const Dashboard = () => {
       stock: Math.max(item.bought - item.sold, 0),
     }));
 
-    // Apply advanced search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       summary = summary.filter(item =>
@@ -130,10 +162,11 @@ const Dashboard = () => {
     }
 
     setStockSummary(summary);
-  }, [buyData, sellData, selectedBrand, startDate, endDate, selectedDate, searchQuery]);
+  }, [buyData, sellData, returnData, selectedBrand, startDate, endDate, selectedDate, searchQuery]);
 
   const totalBought = stockSummary.reduce((sum, item) => sum + item.bought, 0);
   const totalSold = stockSummary.reduce((sum, item) => sum + item.sold, 0);
+  const totalReturned = stockSummary.reduce((sum, item) => sum + item.returned, 0);
   const availableStock = stockSummary.reduce((sum, item) => sum + item.stock, 0);
 
   const totalBuyCost = buyData
@@ -143,6 +176,20 @@ const Dashboard = () => {
   const totalSales = sellData
     .filter(item => item.brand === selectedBrand || !selectedBrand)
     .reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity, 10) || 0), 0);
+
+  const totalReturnAmount = returnData
+    .filter(item => item.brand === selectedBrand || !selectedBrand)
+    .reduce((sum, item) => sum + (parseFloat(item.returnPrice) * parseInt(item.returnQuantity, 10) || 0), 0);
+
+  const adjustedTotalSales = totalSales - totalReturnAmount;
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = stockSummary.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(stockSummary.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -169,7 +216,7 @@ const Dashboard = () => {
         <StatCard title="Total Sold" value={totalSold} icon={<TruckIcon className="w-8 h-8 text-green-600" />} />
         <StatCard title="Available Stock" value={availableStock} icon={<CubeIcon className="w-8 h-8 text-yellow-500" />} />
         <StatCard title="Total Buy Cost" value={`Rs. ${totalBuyCost.toLocaleString()}`} icon={<CurrencyDollarIcon className="w-8 h-8 text-purple-600" />} />
-        <StatCard title="Total Sales" value={`Rs. ${totalSales.toLocaleString()}`} icon={<ChartBarIcon className="w-8 h-8 text-teal-600" />} />
+        <StatCard title="Total Sales" value={`Rs. ${adjustedTotalSales.toLocaleString()}`} icon={<ChartBarIcon className="w-8 h-8 text-teal-600" />} />
       </div>
 
       <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -227,12 +274,13 @@ const Dashboard = () => {
               <th className="p-3 font-medium">Model</th>
               <th className="p-3 font-medium">Bought</th>
               <th className="p-3 font-medium">Sold</th>
+              <th className="p-3 font-medium">Returned</th>
               <th className="p-3 font-medium">Available</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {stockSummary.length > 0 ? (
-              stockSummary.map((item, idx) => (
+            {currentItems.length > 0 ? (
+              currentItems.map((item, idx) => (
                 <tr key={idx} className="hover:bg-gray-50 transition">
                   <td className="p-3">{item.company}</td>
                   <td className="p-3">{item.brand}</td>
@@ -240,16 +288,29 @@ const Dashboard = () => {
                   <td className="p-3">{item.model}</td>
                   <td className="p-3">{item.bought}</td>
                   <td className="p-3">{item.sold}</td>
+                  <td className="p-3">{item.returned}</td>
                   <td className="p-3 font-semibold text-gray-800">{item.stock}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center py-6 text-gray-500">No data found.</td>
+                <td colSpan="8" className="text-center py-6 text-gray-500">No data found.</td>
               </tr>
             )}
           </tbody>
         </table>
+        {/* Pagination */}
+        <div className="p-4 flex justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`px-3 py-1 rounded ${currentPage === number ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+            >
+              {number}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
