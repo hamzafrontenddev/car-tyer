@@ -299,7 +299,7 @@ const AddItem = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">
-        {selectedId ? "Edit Tyre" : "Add Tyre"}
+        {selectedId ? "Edit Product" : "Add Item"}
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -448,7 +448,7 @@ const AddItem = () => {
         </div>
       </div>
 
-      <h3 className="text-xl font-semibold mt-8 mb-4">Tyres List (Private)</h3>
+      <h3 className="text-xl font-semibold mt-8 mb-4">Tyres List</h3>
       {currentItems.length === 0 ? (
         <p>No items found.</p>
       ) : (

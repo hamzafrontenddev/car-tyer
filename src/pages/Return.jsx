@@ -209,7 +209,7 @@ const Return = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">🛒 Return Tyre</h2>
+      <h2 className="text-xl font-semibold mb-4">🛒 Return Item</h2>
 
       <form className="grid grid-cols-3 gap-4 mb-6" onSubmit={handleSubmit}>
         <div className="relative">

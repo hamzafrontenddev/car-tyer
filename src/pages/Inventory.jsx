@@ -8,6 +8,7 @@ import {
   TruckIcon,
   CubeIcon,
   CalendarIcon,
+  BanknotesIcon, // Added for Profit card
 } from "@heroicons/react/24/outline";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,7 +25,7 @@ const filterByDateRange = (data, start, end) => {
 const Dashboard = () => {
   const [buyData, setBuyData] = useState([]);
   const [sellData, setSellData] = useState([]);
-  const [returnData, setReturnData] = useState([]); // State for returned tyres
+  const [returnData, setReturnData] = useState([]);
   const [stockSummary, setStockSummary] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState("");
   const [brandOptions, setBrandOptions] = useState([]);
@@ -97,7 +98,6 @@ const Dashboard = () => {
 
     const map = new Map();
 
-    // Process purchased tyres (bought)
     filteredBuy.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -113,7 +113,6 @@ const Dashboard = () => {
       map.set(key, entry);
     });
 
-    // Process sold tyres
     filteredSell.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -129,7 +128,6 @@ const Dashboard = () => {
       map.set(key, entry);
     });
 
-    // Process returned tyres
     filteredReturns.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -182,8 +180,8 @@ const Dashboard = () => {
     .reduce((sum, item) => sum + (parseFloat(item.returnPrice) * parseInt(item.returnQuantity, 10) || 0), 0);
 
   const adjustedTotalSales = totalSales - totalReturnAmount;
+  const profit = adjustedTotalSales - totalBuyCost; // Calculate profit
 
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = stockSummary.slice(indexOfFirstItem, indexOfLastItem);
@@ -212,11 +210,12 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <StatCard title="Total Bought" value={totalBought} icon={<ShoppingCartIcon className="w-8 h-8 text-blue-600" />} />
+        <StatCard title="Total Buy Product" value={totalBought} icon={<ShoppingCartIcon className="w-8 h-8 text-blue-600" />} />
         <StatCard title="Total Sold" value={totalSold} icon={<TruckIcon className="w-8 h-8 text-green-600" />} />
         <StatCard title="Available Stock" value={availableStock} icon={<CubeIcon className="w-8 h-8 text-yellow-500" />} />
         <StatCard title="Total Buy Cost" value={`Rs. ${totalBuyCost.toLocaleString()}`} icon={<CurrencyDollarIcon className="w-8 h-8 text-purple-600" />} />
         <StatCard title="Total Sales" value={`Rs. ${adjustedTotalSales.toLocaleString()}`} icon={<ChartBarIcon className="w-8 h-8 text-teal-600" />} />
+        <StatCard title="Profit" value={`Rs. ${profit.toLocaleString()}`} icon={<BanknotesIcon className="w-8 h-8 text-green-600" />} />
       </div>
 
       <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -240,7 +239,7 @@ const Dashboard = () => {
               endDate={endDate}
               placeholderText="Start Date"
               className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-              dateFormat="dd/MM/yyyy"
+              date map="dd/MM/yyyy"
               isClearable
             />
             <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
@@ -272,7 +271,7 @@ const Dashboard = () => {
               <th className="p-3 font-medium">Brand</th>
               <th className="p-3 font-medium">Size</th>
               <th className="p-3 font-medium">Model</th>
-              <th className="p-3 font-medium">Bought</th>
+              <th className="p-3 font-medium">Total Buy</th>
               <th className="p-3 font-medium">Sold</th>
               <th className="p-3 font-medium">Returned</th>
               <th className="p-3 font-medium">Available</th>
@@ -299,7 +298,6 @@ const Dashboard = () => {
             )}
           </tbody>
         </table>
-        {/* Pagination */}
         <div className="p-4 flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
             <button

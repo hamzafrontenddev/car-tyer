@@ -5,9 +5,10 @@ import "react-toastify/dist/ReactToastify.css";
 import BuyTyre from "./pages/BuyTyre";
 import Inventory from "./pages/Inventory";
 import Sell from "./pages/Sell";
-import item from './pages/Additem'
 import Additem from "./pages/Additem";
-import Return from './pages/Return'
+import Return from "./pages/Return";
+import CompanyLeaders from "./pages/CompanyLeaders";
+import ProfitLoss from "./pages/ProfitLoss";
 
 function App() {
   return (
@@ -67,6 +68,26 @@ function App() {
             >
               Return
             </NavLink>
+            <NavLink
+              to="/companies"
+              className={({ isActive }) =>
+                `font-semibold transition duration-200 ${
+                  isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`
+              }
+            >
+              Companies
+            </NavLink>
+            <NavLink
+              to="/profit-loss"
+              className={({ isActive }) =>
+                `font-semibold transition duration-200 ${
+                  isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`
+              }
+            >
+              Profit & Loss
+            </NavLink>
           </div>
         </nav>
 
@@ -77,7 +98,9 @@ function App() {
             <Route path="/buy" element={<BuyTyre />} />
             <Route path="/item" element={<Additem />} />
             <Route path="/sell" element={<Sell />} />
-            <Route path='/return' element={<Return />} />
+            <Route path="/return" element={<Return />} />
+            <Route path="/companies" element={<CompanyLeaders />} />
+            <Route path="/profit-loss" element={<ProfitLoss />} />
           </Routes>
         </div>
 
