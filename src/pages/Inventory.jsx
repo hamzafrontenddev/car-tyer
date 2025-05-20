@@ -8,7 +8,7 @@ import {
   TruckIcon,
   CubeIcon,
   CalendarIcon,
-  BanknotesIcon, // Added for Profit card
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -108,8 +108,12 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
+        store: 0,
+        shop: 0,
       };
       entry.bought += parseInt(item.quantity, 10) || 0;
+      entry.store += parseInt(item.store, 10) || 0;
+      entry.shop += parseInt(item.shop, 10) || 0;
       map.set(key, entry);
     });
 
@@ -123,8 +127,11 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
+        store: map.get(key)?.store || 0, // Keep store quantity from buyData
+        shop: map.get(key)?.shop || 0,
       };
       entry.sold += parseInt(item.quantity, 10) || 0;
+      entry.shop = Math.max((map.get(key)?.shop || 0) - parseInt(item.quantity, 10) || 0, 0); // Update shop quantity only
       map.set(key, entry);
     });
 
@@ -138,9 +145,12 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
+        store: map.get(key)?.store || 0, // Keep store quantity from buyData
+        shop: map.get(key)?.shop || 0,
       };
       entry.returned += parseInt(item.returnQuantity, 10) || 0;
       entry.sold = Math.max(entry.sold - entry.returned, 0);
+      entry.shop = Math.max(entry.shop + parseInt(item.returnQuantity, 10) || 0, 0); // Adjust shop for returns
       map.set(key, entry);
     });
 
@@ -166,6 +176,8 @@ const Dashboard = () => {
   const totalSold = stockSummary.reduce((sum, item) => sum + item.sold, 0);
   const totalReturned = stockSummary.reduce((sum, item) => sum + item.returned, 0);
   const availableStock = stockSummary.reduce((sum, item) => sum + item.stock, 0);
+  const totalStore = buyData.reduce((sum, item) => sum + (parseInt(item.store, 10) || 0), 0);
+  const totalShop = buyData.reduce((sum, item) => sum + (parseInt(item.shop, 10) || 0), 0);
 
   const totalBuyCost = buyData
     .filter(item => item.brand === selectedBrand || !selectedBrand)
@@ -180,7 +192,7 @@ const Dashboard = () => {
     .reduce((sum, item) => sum + (parseFloat(item.returnPrice) * parseInt(item.returnQuantity, 10) || 0), 0);
 
   const adjustedTotalSales = totalSales - totalReturnAmount;
-  const profit = adjustedTotalSales - totalBuyCost; // Calculate profit
+  const profit = adjustedTotalSales - totalBuyCost;
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -213,6 +225,8 @@ const Dashboard = () => {
         <StatCard title="Total Buy Product" value={totalBought} icon={<ShoppingCartIcon className="w-8 h-8 text-blue-600" />} />
         <StatCard title="Total Sold" value={totalSold} icon={<TruckIcon className="w-8 h-8 text-green-600" />} />
         <StatCard title="Available Stock" value={availableStock} icon={<CubeIcon className="w-8 h-8 text-yellow-500" />} />
+        <StatCard title="Total Store Quantity" value={totalStore} icon={<CubeIcon className="w-8 h-8 text-purple-600" />} />
+        <StatCard title="Total Shop Quantity" value={totalShop} icon={<CubeIcon className="w-8 h-8 text-purple-600" />} />
         <StatCard title="Total Buy Cost" value={`Rs. ${totalBuyCost.toLocaleString()}`} icon={<CurrencyDollarIcon className="w-8 h-8 text-purple-600" />} />
         <StatCard title="Total Sales" value={`Rs. ${adjustedTotalSales.toLocaleString()}`} icon={<ChartBarIcon className="w-8 h-8 text-teal-600" />} />
         <StatCard title="Profit" value={`Rs. ${profit.toLocaleString()}`} icon={<BanknotesIcon className="w-8 h-8 text-green-600" />} />
@@ -239,7 +253,7 @@ const Dashboard = () => {
               endDate={endDate}
               placeholderText="Start Date"
               className="border pl-10 pr-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-              date map="dd/MM/yyyy"
+              dateFormat="dd/MM/yyyy"
               isClearable
             />
             <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
@@ -272,6 +286,8 @@ const Dashboard = () => {
               <th className="p-3 font-medium">Size</th>
               <th className="p-3 font-medium">Model</th>
               <th className="p-3 font-medium">Total Buy</th>
+              <th className="p-3 font-medium">Store</th>
+              <th className="p-3 font-medium">Shop</th>
               <th className="p-3 font-medium">Sold</th>
               <th className="p-3 font-medium">Returned</th>
               <th className="p-3 font-medium">Available</th>
@@ -286,6 +302,8 @@ const Dashboard = () => {
                   <td className="p-3">{item.size}</td>
                   <td className="p-3">{item.model}</td>
                   <td className="p-3">{item.bought}</td>
+                  <td className="p-3">{item.store}</td>
+                  <td className="p-3">{item.shop}</td>
                   <td className="p-3">{item.sold}</td>
                   <td className="p-3">{item.returned}</td>
                   <td className="p-3 font-semibold text-gray-800">{item.stock}</td>
@@ -293,7 +311,7 @@ const Dashboard = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center py-6 text-gray-500">No data found.</td>
+                <td colSpan="10" className="text-center py-6 text-gray-500">No data found.</td>
               </tr>
             )}
           </tbody>

@@ -9,6 +9,7 @@ import Additem from "./pages/Additem";
 import Return from "./pages/Return";
 import CompanyLeaders from "./pages/CompanyLeaders";
 import ProfitLoss from "./pages/ProfitLoss";
+import Transfer from "./pages/Transfer";
 
 function App() {
   return (
@@ -88,6 +89,17 @@ function App() {
             >
               Profit & Loss
             </NavLink>
+            <NavLink
+              to="/transfor-data"
+              className={({ isActive }) =>
+                `font-semibold transition duration-200 ${
+                  isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`
+              }
+            >
+              Transfor Data
+            </NavLink>
+
           </div>
         </nav>
 
@@ -101,6 +113,7 @@ function App() {
             <Route path="/return" element={<Return />} />
             <Route path="/companies" element={<CompanyLeaders />} />
             <Route path="/profit-loss" element={<ProfitLoss />} />
+            <Route path="/transfor-data" element={<Transfer />} />
           </Routes>
         </div>
 

@@ -235,6 +235,7 @@ const AddItem = () => {
       }
 
       setForm({
+        company:"",
         brand: "",
         model: "",
         size: "",

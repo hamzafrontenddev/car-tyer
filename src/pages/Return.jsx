@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 
@@ -33,6 +33,7 @@ const Return = () => {
   const [quantity, setQuantity] = useState("");
   const [returnQuantity, setReturnQuantity] = useState("");
   const [discount, setDiscount] = useState(""); // Read-only discount
+  const [due, setDue] = useState(""); // New read-only due field
 
   const [date, setDate] = useState("");
   const [search, setSearch] = useState("");
@@ -117,11 +118,13 @@ const Return = () => {
     if (match) {
       setPrice(match.price);
       setQuantity(match.quantity);
-      setDiscount(match.discount || 0); // Set discount from sold tyre
+      setDiscount(match.discount || 0);
+      setDue(match.due || 0); // Fetch due from soldTyres
     } else {
       setPrice("");
       setQuantity("");
       setDiscount("");
+      setDue(""); // Reset due if no match
     }
   }, [selectedCustomer, selectedCompany, selectedBrand, selectedModel, selectedSize, soldTyres]);
 
@@ -171,10 +174,48 @@ const Return = () => {
       returnTotalPrice: Number(manualReturnPrice) * Number(returnQuantity),
       date,
       discount: Number(discount), // Include discount
+      due: Number(due), // Include due
     };
 
     try {
       await addDoc(collection(db, "returnedTyres"), returnTyre);
+
+      // Update shop quantity in purchasedTyres
+      const purchasedQuery = query(
+        collection(db, "purchasedTyres"),
+        where("company", "==", selectedCompany),
+        where("brand", "==", selectedBrand),
+        where("model", "==", selectedModel),
+        where("size", "==", selectedSize)
+      );
+      const purchasedSnapshot = await getDocs(purchasedQuery);
+      const purchasedTyres = purchasedSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      if (purchasedTyres.length === 0) {
+        toast.error("No matching tyre found in purchasedTyres");
+        return;
+      }
+
+      // Validate return quantity
+      if (Number(returnQuantity) > Number(quantity)) {
+        toast.error("Return quantity cannot exceed original sold quantity");
+        return;
+      }
+
+      // Update shop quantity for the first matching document
+      const targetTyre = purchasedTyres[0];
+      const currentShop = parseInt(targetTyre.shop) || 0;
+      const newShopQuantity = currentShop + Number(returnQuantity);
+
+      await updateDoc(doc(db, "purchasedTyres", targetTyre.id), {
+        shop: newShopQuantity,
+      });
+      console.log(`Added ${returnQuantity} to shop quantity for tyre ID: ${targetTyre.id}`);
+      toast.success(`Shop quantity updated to ${newShopQuantity}`);
+
       toast.success("Tyre returned successfully!");
       setManualReturnPrice("");
       setSelectedCustomer("");
@@ -186,6 +227,7 @@ const Return = () => {
       setQuantity("");
       setReturnQuantity("");
       setDiscount("");
+      setDue(""); // Reset due after submission
       setDate("");
       setShowCustomerDropdown(false); // Hide dropdown after submission
     } catch (err) {
@@ -333,8 +375,15 @@ const Return = () => {
         />
         <input
           type="text"
-          placeholder="Discount (%)"
+          placeholder="Discount"
           value={discount}
+          readOnly
+          className="border border-gray-300 bg-gray-100 rounded px-3 py-2"
+        />
+        <input
+          type="text"
+          placeholder="Due Amount"
+          value={due}
           readOnly
           className="border border-gray-300 bg-gray-100 rounded px-3 py-2"
         />
@@ -410,6 +459,7 @@ const Return = () => {
               <th className="py-2 px-4 font-semibold">Return Price</th>
               <th className="py-2 px-4 font-semibold">Return Total Price</th>
               <th className="py-2 px-4 font-semibold">Discount</th>
+              <th className="py-2 px-4 font-semibold">Due</th>
               <th className="py-2 px-4 font-semibold">Date</th>
               <th className="py-2 px-4 font-semibold">Status</th>
               <th className="py-2 px-4 font-semibold">Action</th>
@@ -430,7 +480,8 @@ const Return = () => {
                 <td className="py-2 px-4">{t.returnQuantity}</td>
                 <td className="py-2 px-4">Rs. {t.returnPrice}</td>
                 <td className="py-2 px-4">Rs. {t.returnTotalPrice}</td>
-                <td className="py-2 px-4">{`${t.discount || 0}%`}</td>
+                <td className="py-2 px-4">{`${t.discount || 0}`}</td>
+                <td className="py-2 px-4">Rs. {t.due || 0}</td>
                 <td className="py-2 px-4">{t.date}</td>
                 <td className="py-2 px-4">Returned</td>
                 <td className="py-2 px-4">
@@ -501,7 +552,10 @@ const Return = () => {
                 <dd>Rs. {selectedReturn.returnPrice}</dd>
 
                 <dt className="font-medium">Discount:</dt>
-                <dd>{selectedReturn.discount || 0}%</dd>
+                <dd>{selectedReturn.discount || 0}</dd>
+
+                <dt className="font-medium">Due Amount:</dt>
+                <dd>Rs. {selectedReturn.due || 0}</dd>
 
                 <dt className="font-bold text-lg">Return Total:</dt>
                 <dd className="font-bold text-lg">Rs. {selectedReturn.returnTotalPrice}</dd>
