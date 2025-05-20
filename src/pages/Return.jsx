@@ -515,54 +515,80 @@ const Return = () => {
             className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none"
             id="printable"
           >
-            <header className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-              <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
-                <span role="img" aria-label="Invoice">🧾</span> Return Invoice
-              </h2>
-              <p className="text-sm text-gray-500 print:hidden">Date: <time>{selectedReturn.date}</time></p>
-            </header>
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <img src="/path/to/logo.png" alt="Logo" className="w-16 h-16" />
+                <div>
+                  <h2 className="text-2xl font-bold text-red-600">سائی ٹائر سنٹر</h2>
+                  <p className="text-sm text-gray-600">0317-7951283, 0307-7327931</p>
+                  <p className="text-sm text-gray-600">بہت ساری مصنوعات کی فروخت اور خریداری</p>
+                  <p className="text-sm text-gray-600">نوٹ: کوئی گارنٹی امپورٹڈ ٹائرز پر نہیں</p>
+                </div>
+              </div>
+              <img src="/path/to/car.png" alt="Car" className="w-32 h-32 opacity-50" />
+            </div>
 
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-gray-700 text-sm leading-relaxed mb-8">
+            {/* Invoice Title and Details */}
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold text-gray-900">انوائس</h2>
+              <hr className="my-2 border-gray-300" />
+              <div className="flex justify-center gap-8 text-sm text-gray-700">
+                <p>تاریخ: <time>{selectedReturn.date}</time></p>
+                <p>انوائس نمبر: {selectedReturn.id}</p>
+              </div>
+            </div>
+
+            {/* Customer and Tyre Details */}
+            <div className="grid grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
               <div>
-                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Customer Details</h3>
-                <p><span className="font-medium text-gray-800">Customer:</span> {selectedReturn.customer}</p>
-                <p><span className="font-medium text-gray-800">Company:</span> {selectedReturn.company}</p>
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
+                <p><span className="font-medium">صارف:</span> {selectedReturn.customer}</p>
+                <p><span className="font-medium">کمپنی:</span> {selectedReturn.company}</p>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Tyre Details</h3>
-                <p><span className="font-medium text-gray-800">Brand:</span> {selectedReturn.brand}</p>
-                <p><span className="font-medium text-gray-800">Model:</span> {selectedReturn.model}</p>
-                <p><span className="font-medium text-gray-800">Size:</span> {selectedReturn.size}</p>
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
+                <p><span className="font-medium">برانڈ:</span> {selectedReturn.brand}</p>
+                <p><span className="font-medium">ماڈل:</span> {selectedReturn.model}</p>
+                <p><span className="font-medium">سائز:</span> {selectedReturn.size}</p>
               </div>
-            </section>
+            </div>
 
-            <section className="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-              <h3 className="font-semibold text-lg mb-4 text-gray-900 border-b border-gray-300 pb-2">Pricing Summary</h3>
-              <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-gray-700 text-sm">
-                <dt className="font-medium">Original Quantity:</dt>
-                <dd>{selectedReturn.quantity}</dd>
+            {/* Pricing Summary */}
+            <div className="mb-6">
+              <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">قیمت کا خلاصہ</h3>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700">
+                <p className="font-medium">اصل مقدار:</p>
+                <p>{selectedReturn.quantity}</p>
+                <p className="font-medium">واپس مقدار:</p>
+                <p>{selectedReturn.returnQuantity}</p>
+                <p className="font-medium">فی ٹائر قیمت:</p>
+                <p>Rs. {selectedReturn.price}</p>
+                <p className="font-medium">واپس قیمت فی ٹائر:</p>
+                <p>Rs. {selectedReturn.returnPrice}</p>
+                <p className="font-medium">رعایت:</p>
+                <p>{selectedReturn.discount || 0}</p>
+                <p className="font-medium">بقایا رقم:</p>
+                <p>Rs. {selectedReturn.due || 0}</p>
+                <p className="font-bold text-lg">کل قیمت:</p>
+                <p className="font-bold text-lg">Rs. {selectedReturn.returnTotalPrice}</p>
+              </div>
+            </div>
 
-                <dt className="font-medium">Return Quantity:</dt>
-                <dd>{selectedReturn.returnQuantity}</dd>
+            {/* Note */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600">نوٹ: یہ انوائس حتمی ہے۔</p>
+            </div>
 
-                <dt className="font-medium">Price per Tyre:</dt>
-                <dd>Rs. {selectedReturn.price}</dd>
+            {/* Footer */}
+            <div className="text-center text-red-600 border-t border-gray-200 pt-4">
+              <img src="/path/to/wheel.png" alt="Wheel" className="w-12 h-12 mx-auto mb-2" />
+              <p className="text-sm font-semibold">نوٹ: ہماری ویب سائٹ پر وزٹ کریں</p>
+              <p className="text-sm font-semibold">سائی ٹائر سنٹر - ڈاینامو ٹائر</p>
+            </div>
 
-                <dt className="font-medium">Return Price per Tyre:</dt>
-                <dd>Rs. {selectedReturn.returnPrice}</dd>
-
-                <dt className="font-medium">Discount:</dt>
-                <dd>{selectedReturn.discount || 0}</dd>
-
-                <dt className="font-medium">Due Amount:</dt>
-                <dd>Rs. {selectedReturn.due || 0}</dd>
-
-                <dt className="font-bold text-lg">Return Total:</dt>
-                <dd className="font-bold text-lg">Rs. {selectedReturn.returnTotalPrice}</dd>
-              </dl>
-            </section>
-
-            <footer className="flex justify-between items-center text-gray-600 text-sm print:hidden">
+            {/* Buttons (Hidden on Print) */}
+            <div className="flex justify-between items-center text-gray-600 text-sm print:hidden mt-6">
               <p>Status: <span className="font-semibold text-green-600">Returned</span></p>
               <div className="flex gap-3">
                 <button
@@ -580,7 +606,7 @@ const Return = () => {
                   ❌ Close
                 </button>
               </div>
-            </footer>
+            </div>
           </div>
         </div>
       )}

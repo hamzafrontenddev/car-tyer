@@ -694,7 +694,7 @@ const SellTyre = () => {
                     </button>
                     <button
                       onClick={() => setViewTyre(tyre)}
-                      className="px-3 py-1 text-sm bg-yellow-100 Toxicyellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
+                      className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
                     >
                       View
                     </button>
@@ -726,44 +726,68 @@ const SellTyre = () => {
       {viewTyre && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
           <div ref={printRef} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none">
-            <header className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-              <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
-                <span role="img" aria-label="Invoice">🧾</span> Invoice
-              </h2>
-              <p className="text-sm text-gray-500 print:hidden">Date: <time>{viewTyre.date}</time></p>
-            </header>
-
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-gray-700 text-sm leading-relaxed mb-8">
-              <div>
-                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Customer Details</h3>
-                <p><span className="font-medium text-gray-800">Customer:</span> {viewTyre.customerName}</p>
-                <p><span className="font-medium text-gray-800">Company:</span> {viewTyre.company}</p>
+            {/* Enhanced Header */}
+            <div className="bg-gradient-to-r from-blue-700 to-gray-800 text-white p-10 rounded-t-xl mb-2">
+              <div className="text-center">
+                <h2 className="text-5xl font-bold">سرحد ٹائر ٹریڈرز</h2>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-3 text-gray-900 border-b border-gray-300 pb-1">Tyre Details</h3>
-                <p><span className="font-medium text-gray-800">Brand:</span> {viewTyre.brand}</p>
-                <p><span className="font-medium text-gray-800">Model:</span> {viewTyre.model}</p>
-                <p><span className="font-medium text-gray-800">Size:</span> {viewTyre.size}</p>
+            </div>
+
+            {/* Invoice Title and Details */}
+            <div className="text-center gap-4 mb-6">
+              <p className="text-sm">
+                0317-7951283 - عبدالستار، 0307-7327931 - یسسن خان، 0307-7177613 - گوہر خان
+              </p>
+              <h2 className="text-3xl font-bold text-gray-900">انوائس</h2>
+              <hr className="my-2 border-gray-300" />
+              <div className="flex justify-center gap-8 text-sm text-gray-700 font-semibold">
+                <p>تاریخ: <time>{viewTyre.date}</time></p>
               </div>
-            </section>
+            </div>
 
-            <section className="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-              <h3 className="font-semibold text-lg mb-4 text-gray-900 border-b border-gray-300 pb-2">Pricing Details</h3>
-              <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-gray-700 text-sm">
-                <dt className="font-medium">Price per Unit:</dt>
-                <dd>Rs. {viewTyre.price.toFixed(2)}</dd>
-                <dt className="font-medium">Quantity:</dt>
-                <dd>{viewTyre.quantity}</dd>
-                <dt className="font-medium">Discount:</dt>
-                <dd>Rs. {viewTyre.discount || 0}</dd>
-                <dt className="font-medium">Due Amount:</dt>
-                <dd>Rs. {viewTyre.due || 0}</dd>
-                <dt className="font-bold text-lg">Total:</dt>
-                <dd className="font-bold text-lg">Rs. {(viewTyre.payableAmount || viewTyre.price * tyre.quantity).toLocaleString()}</dd>
-              </dl>
-            </section>
+            {/* Customer and Tyre Details */}
+            <div className="flex justify-between md:grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
+              <div></div> {/* Empty div for spacing */}
+              <div className="text-right">
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
+                <p><span className="font-medium">برانڈ:</span> {viewTyre.brand}</p>
+                <p><span className="font-medium">ماڈل:</span> {viewTyre.model}</p>
+                <p><span className="font-medium">سائز:</span> {viewTyre.size}</p>
+              </div>
+              <div></div> {/* Empty div to push content to the right */}
+              <div className="text-right">
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
+                <p><span className="font-medium"> {viewTyre.customerName || 'N/A'} : صارف کا نام </span></p>
+                <p><span className="font-medium">{viewTyre.company}  : کمپنی کا نام</span></p>
+              </div>
+            </div>
 
-            <footer className="flex justify-between items-center text-gray-600 text-sm print:hidden">
+            {/* Pricing Summary */}
+            <div className="mb-6">
+              <div className="text-right mb-2">
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 inline-block">قیمت کا خلاصہ</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 text-right">
+                <p>Rs. {viewTyre.price.toFixed(2)} : </p>
+                <p className="font-medium">فی یونٹ قیمت</p>
+                <p>{viewTyre.quantity} : </p>
+                <p className="font-medium">مقدار</p>
+                <p>Rs. {viewTyre.discount || 0} : </p>
+                <p className="font-medium">رعایت</p>
+                <p>Rs. {viewTyre.due || 0} : </p>
+                <p className="font-medium">بقایا رقم</p>
+                <p className="font-bold text-lg">Rs. {(viewTyre.payableAmount || viewTyre.price * viewTyre.quantity).toLocaleString()} : </p>
+                <p className="font-bold text-lg">کل رقم </p>
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600">نوٹ: یہ انوائس حتمی ہے۔</p>
+            </div>
+
+            {/* Buttons (Hidden on Print) */}
+            <div className="flex justify-between items-center text-gray-600 text-sm print:hidden mt-6">
               <p>Status: <span className="font-semibold text-green-600">Sold</span></p>
               <div className="flex gap-3">
                 <button
@@ -779,7 +803,7 @@ const SellTyre = () => {
                   Close
                 </button>
               </div>
-            </footer>
+            </div>
           </div>
         </div>
       )}
