@@ -23,6 +23,9 @@ const ProfitLoss = () => {
   defaultStartDate.setDate(today.getDate() - 30); // 30 days ago
   const [startDate, setStartDate] = useState(null); // Changed to null for initial full data
   const [endDate, setEndDate] = useState(null); // Changed to null for initial full data
+  const [searchQuery, setSearchQuery] = useState(""); // State for search bar
+  const [currentPage, setCurrentPage] = useState(1); // State for current page
+  const [rowsPerPage] = useState(5); // Number of rows per page
 
   useEffect(() => {
     const unsubscribeBuy = onSnapshot(
@@ -168,6 +171,21 @@ const ProfitLoss = () => {
     return { brand, ...data, profit, margin };
   });
 
+  // Filter brandBreakdownArray based on search query
+  const filteredBrandBreakdownArray = brandBreakdownArray.filter((row) =>
+    row.brand.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Pagination logic
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredBrandBreakdownArray.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredBrandBreakdownArray.length / rowsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   const tyreProfit = filteredSellData
     .map((item) => {
       const buyItem = filteredBuyData.find(
@@ -306,6 +324,18 @@ const ProfitLoss = () => {
 
       <div className="bg-white shadow-lg rounded-xl p-6 mb-8 border border-gray-100">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Brand-wise Profit Breakdown</h3>
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search by brand..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
+            className="border pl-3 pr-3 py-2 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 w-full max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-200 text-gray-700">
@@ -320,7 +350,7 @@ const ProfitLoss = () => {
               </tr>
             </thead>
             <tbody>
-              {brandBreakdownArray.map((row, idx) => (
+              {currentRows.map((row, idx) => (
                 <tr
                   key={row.brand}
                   className={`border-b ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition-colors`}
@@ -345,6 +375,25 @@ const ProfitLoss = () => {
               </tr>
             </tbody>
           </table>
+        </div>
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg ${currentPage === 1 ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+          >
+            Previous
+          </button>
+          <p className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </p>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg ${currentPage === totalPages ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+          >
+            Next
+          </button>
         </div>
       </div>
 
