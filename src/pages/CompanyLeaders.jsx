@@ -81,13 +81,17 @@ const CompanyLeaders = () => {
 
     return Object.keys(companyMap).map(company => {
       const details = companyDetails.find(detail => detail.companyName === company) || {};
+      const totalCost = companyMap[company].totalCost;
+      const totalPaid = parseFloat(details.totalPaid) || 0;
+      const discountAmount = parseFloat(details.discountAmount) || 0;
+      const due = (totalCost - totalPaid - discountAmount).toFixed(2);
       return {
         company,
         totalItems: companyMap[company].totalItems,
-        totalCost: companyMap[company].totalCost,
-        totalPaid: details.totalPaid || 0,
-        due: details.due || 0,
-        discountAmount: details.discountAmount || 0,
+        totalCost,
+        totalPaid,
+        due: parseFloat(due) >= 0 ? parseFloat(due) : 0, // Ensure due is non-negative
+        discountAmount,
         brands: companyMap[company].brands,
       };
     });
@@ -134,9 +138,9 @@ const CompanyLeaders = () => {
           brand,
           totalItems: filteredItems,
           totalCost: filteredCost,
-          totalPaid: details.totalPaid || 0,
-          due: details.due || 0,
-          totalReturn: details.totalReturn || 0,
+          totalPaid: parseFloat(details.totalPaid) || 0,
+          due: parseFloat(details.due) || 0,
+          totalReturn: parseFloat(details.totalReturn) || 0,
           sizes: filteredSizes.join(', ') || 'N/A',
           date: filteredPurchaseDates.sort().join(', ') || 'N/A',
         };
@@ -366,11 +370,11 @@ const CompanyLeaders = () => {
                 <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.totalPaid.toLocaleString()}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow-sm hover:shadow-md transition duration-200">
-                <p className="text-sm font-medium text-gray-600">Due</p>
+                <p className="text-sm font-medium text-gray-600">Total Due</p>
                 <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.due.toLocaleString()}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow-sm hover:shadow-md transition duration-200">
-                <p className="text-sm font-medium text-gray-600">Discount Amount</p>
+                <p className="text-sm font-medium text-gray-600">Total Discount</p>
                 <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.discountAmount.toLocaleString()}</p>
               </div>
             </div>
