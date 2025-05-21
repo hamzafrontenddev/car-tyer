@@ -98,6 +98,7 @@ const Dashboard = () => {
 
     const map = new Map();
 
+    // Initialize with buy data
     filteredBuy.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -110,15 +111,16 @@ const Dashboard = () => {
         returned: 0,
         store: 0,
         shop: 0,
-        latestDate: item.date ? new Date(item.date) : new Date(0), // Initialize with item date
+        latestDate: item.date ? new Date(item.date) : new Date(0),
       };
       entry.bought += parseInt(item.quantity, 10) || 0;
       entry.store += parseInt(item.store, 10) || 0;
-      entry.shop += parseInt(item.shop, 10) || 0;
+      entry.shop += parseInt(item.shop, 10) || 0; // Accumulate shop quantity
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
 
+    // Process sales
     filteredSell.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -129,16 +131,19 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
-        store: map.get(key)?.store || 0,
-        shop: map.get(key)?.shop || 0,
+        store: 0,
+        shop: 0,
         latestDate: item.date ? new Date(item.date) : new Date(0),
       };
-      entry.sold += parseInt(item.quantity, 10) || 0;
-      entry.shop = Math.max((map.get(key)?.shop || 0) - parseInt(item.quantity, 10) || 0, 0);
+      const soldQty = parseInt(item.quantity, 10) || 0;
+      entry.sold += soldQty;
+      // Deduct from shop quantity, ensuring it doesn't go below 0
+      entry.shop = Math.max(entry.shop - soldQty, 0);
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
 
+    // Process returns
     filteredReturns.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
@@ -149,13 +154,15 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
-        store: map.get(key)?.store || 0,
-        shop: map.get(key)?.shop || 0,
+        store: 0,
+        shop: 0,
         latestDate: item.date ? new Date(item.date) : new Date(0),
       };
-      entry.returned += parseInt(item.returnQuantity, 10) || 0;
-      entry.sold = Math.max(entry.sold - entry.returned, 0);
-      entry.shop = Math.max(entry.shop + parseInt(item.returnQuantity, 10) || 0, 0);
+      const returnQty = parseInt(item.returnQuantity, 10) || 0;
+      entry.returned += returnQty;
+      entry.sold = Math.max(entry.sold - returnQty, 0);
+      // Add back to shop quantity on return
+      entry.shop += returnQty;
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
@@ -185,8 +192,12 @@ const Dashboard = () => {
   const totalSold = stockSummary.reduce((sum, item) => sum + item.sold, 0);
   const totalReturned = stockSummary.reduce((sum, item) => sum + item.returned, 0);
   const availableStock = stockSummary.reduce((sum, item) => sum + item.stock, 0);
-  const totalStore = buyData.reduce((sum, item) => sum + (parseInt(item.store, 10) || 0), 0);
-  const totalShop = buyData.reduce((sum, item) => sum + (parseInt(item.shop, 10) || 0), 0);
+  const totalStore = buyData
+    .filter(item => item.brand === selectedBrand || !selectedBrand)
+    .reduce((sum, item) => sum + (parseInt(item.store, 10) || 0), 0);
+  const totalShop = buyData
+    .filter(item => item.brand === selectedBrand || !selectedBrand)
+    .reduce((sum, item) => sum + (parseInt(item.shop, 10) || 0), 0);
 
   const totalBuyCost = buyData
     .filter(item => item.brand === selectedBrand || !selectedBrand)
