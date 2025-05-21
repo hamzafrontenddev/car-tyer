@@ -18,9 +18,11 @@ const CompanyLeaders = () => {
   const [addBrandModalIsOpen, setAddBrandModalIsOpen] = useState(false);
   const [companyFormData, setCompanyFormData] = useState({
     companyName: '',
+    brandName: '',
     totalPaid: '',
     due: '',
-    discountAmount: ''
+    discountAmount: '',
+    customDate: ''
   });
   const [brandFormData, setBrandFormData] = useState({
     brand: '',
@@ -77,6 +79,7 @@ const CompanyLeaders = () => {
         totalPaid: details.totalPaid || 0,
         due: details.due || 0,
         discountAmount: details.discountAmount || 0,
+        customDate: details.customDate || '',
         brands: companyMap[company].brands
       };
     });
@@ -102,6 +105,11 @@ const CompanyLeaders = () => {
     });
   };
 
+  const getBrandsForCompany = (companyName) => {
+    const company = companySummary.find(item => item.company === companyName);
+    return company ? Object.keys(company.brands) : [];
+  };
+
   const openModal = (company) => {
     setSelectedCompany(company);
     setModalIsOpen(true);
@@ -118,7 +126,7 @@ const CompanyLeaders = () => {
 
   const closeAddCompanyModal = () => {
     setAddCompanyModalIsOpen(false);
-    setCompanyFormData({ companyName: '', totalPaid: '', due: '', discountAmount: '' });
+    setCompanyFormData({ companyName: '', brandName: '', totalPaid: '', due: '', discountAmount: '', customDate: '' });
   };
 
   const openAddBrandModal = () => {
@@ -134,7 +142,10 @@ const CompanyLeaders = () => {
     const { name, value } = e.target;
     const updatedFormData = { ...companyFormData, [name]: value };
 
-    // Recalculate due when totalPaid or discountAmount changes
+    if (name === 'companyName') {
+      updatedFormData.brandName = ''; // Reset brandName when company changes
+    }
+
     if (name === 'totalPaid' || name === 'discountAmount') {
       const companyData = companySummary.find(item => item.company === updatedFormData.companyName);
       const totalCost = companyData ? companyData.totalCost : 0;
@@ -153,9 +164,9 @@ const CompanyLeaders = () => {
 
   const handleAddCompanyDetails = async (e) => {
     e.preventDefault();
-    const { companyName, totalPaid, due, discountAmount } = companyFormData;
+    const { companyName, brandName, totalPaid, due, discountAmount, customDate } = companyFormData;
 
-    if (!companyName || !totalPaid || !discountAmount) {
+    if (!companyName || !totalPaid || !discountAmount || !customDate) {
       toast.error('Please fill all fields except Due (calculated automatically)');
       return;
     }
@@ -176,6 +187,7 @@ const CompanyLeaders = () => {
           totalPaid: parseFloat(totalPaid),
           due: parseFloat(due),
           discountAmount: parseFloat(discountAmount),
+          customDate,
           totalItems: companyData.totalItems,
           totalCost: companyData.totalCost
         });
@@ -186,14 +198,53 @@ const CompanyLeaders = () => {
           totalPaid: parseFloat(totalPaid),
           due: parseFloat(due),
           discountAmount: parseFloat(discountAmount),
+          customDate,
           totalItems: companyData.totalItems,
           totalCost: companyData.totalCost
         });
         toast.success('Company details added successfully');
       }
+
+      if (brandName) {
+        const brandExists = brandDetails.find(detail => detail.companyName === companyName && detail.brand === brandName);
+        const brandData = companyData.brands[brandName];
+
+        if (!brandData) {
+          toast.error('Brand not found in purchase data for this company');
+          return;
+        }
+
+        if (brandExists) {
+          const brandDoc = doc(db, 'brandDetails', brandExists.id);
+          await updateDoc(brandDoc, {
+            companyName,
+            brand: brandName,
+            totalPaid: parseFloat(totalPaid),
+            due: parseFloat(due),
+            totalReturn: 0,
+            customDate,
+            totalItems: brandData.totalItems,
+            totalCost: brandData.totalCost
+          });
+          toast.success('Brand details updated successfully');
+        } else {
+          await addDoc(collection(db, 'brandDetails'), {
+            companyName,
+            brand: brandName,
+            totalPaid: parseFloat(totalPaid),
+            due: parseFloat(due),
+            totalReturn: 0,
+            customDate,
+            totalItems: brandData.totalItems,
+            totalCost: brandData.totalCost
+          });
+          toast.success('Brand details added successfully');
+        }
+      }
+
       closeAddCompanyModal();
     } catch (error) {
-      toast.error('Error saving company details');
+      toast.error('Error saving details');
       console.error(error);
     }
   };
@@ -281,40 +332,72 @@ const CompanyLeaders = () => {
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
-        className="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl mx-auto mt-20"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl mx-auto mt-20 transform transition-all duration-300"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center backdrop-blur-sm"
       >
         {selectedCompany && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">{selectedCompany.company} Details</h2>
-            <div className="space-y-2 text-gray-700 mb-6">
-              <p><strong>Company Name:</strong> {selectedCompany.company}</p>
-              <p><strong>Total Items:</strong> {selectedCompany.totalItems}</p>
-              <p><strong>Total Cost:</strong> Rs. {selectedCompany.totalCost.toFixed(2)}</p>
-              <p><strong>Total Paid:</strong> Rs. {selectedCompany.totalPaid.toFixed(2)}</p>
-              <p><strong>Due:</strong> Rs. {selectedCompany.due.toFixed(2)}</p>
-              <p><strong>Discount Amount:</strong> Rs. {selectedCompany.discountAmount.toFixed(2)}</p>
+          <div className="relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 transition duration-200"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h2 className="text-3xl font-bold mb-6 text-gray-900 bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+              {selectedCompany.company} Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Company Name</p>
+                <p className="text-lg font-semibold text-gray-800">{selectedCompany.company}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Total Items</p>
+                <p className="text-lg font-semibold text-gray-800">{selectedCompany.totalItems}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Total Cost</p>
+                <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.totalCost.toFixed(2)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Total Paid</p>
+                <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.totalPaid.toFixed(2)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Due</p>
+                <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.due.toFixed(2)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Discount Amount</p>
+                <p className="text-lg font-semibold text-gray-800">Rs. {selectedCompany.discountAmount.toFixed(2)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Custom Date</p>
+                <p className="text-lg font-semibold text-gray-800">{selectedCompany.customDate || 'N/A'}</p>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">Brand Details</h3>
-            <div className="overflow-x-auto mb-6">
-              <table className="min-w-full border-collapse text-sm text-left">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Brand Details</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-sm text-left bg-white rounded-lg shadow-sm">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="py-2 px-4 font-semibold">Brand</th>
-                    <th className="py-2 px-4 font-semibold">Total Items</th>
-                    <th className="py-2 px-4 font-semibold">Total Cost</th>
-                    <th className="py-2 px-4 font-semibold">Total Paid</th>
-                    <th className="py-2 px-4 font-semibold">Due</th>
+                  <tr className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <th className="py-3 px-6 font-semibold">Brand</th>
+                    <th className="py-3 px-6 font-semibold">Total Items</th>
+                    <th className="py-3 px-6 font-semibold">Total Cost</th>
+                    <th className="py-3 px-6 font-semibold">Total Paid</th>
+                    <th className="py-3 px-6 font-semibold">Due</th>
                   </tr>
                 </thead>
                 <tbody>
                   {getBrandSummary(selectedCompany.company).map((brand, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-2 px-4">{brand.brand}</td>
-                      <td className="py-2 px-4">{brand.totalItems}</td>
-                      <td className="py-2 px-4">Rs. {brand.totalCost.toFixed(2)}</td>
-                      <td className="py-2 px-4">Rs. {brand.totalPaid.toFixed(2)}</td>
-                      <td className="py-2 px-4">Rs. {brand.due.toFixed(2)}</td>
+                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="py-3 px-6">{brand.brand}</td>
+                      <td className="py-3 px-6">{brand.totalItems}</td>
+                      <td className="py-3 px-6">Rs. {brand.totalCost.toFixed(2)}</td>
+                      <td className="py-3 px-6">Rs. {brand.totalPaid.toFixed(2)}</td>
+                      <td className="py-3 px-6">Rs. {brand.due.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -322,7 +405,7 @@ const CompanyLeaders = () => {
             </div>
             <button
               onClick={closeModal}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              className="mt-6 px-6 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition duration-200"
             >
               Close
             </button>
@@ -354,6 +437,33 @@ const CompanyLeaders = () => {
                 <option key={index} value={item.company} />
               ))}
             </datalist>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Brand Name</label>
+            <input
+              type="text"
+              name="brandName"
+              value={companyFormData.brandName}
+              onChange={handleCompanyFormChange}
+              list="brandNames"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <datalist id="brandNames">
+              {getBrandsForCompany(companyFormData.companyName).map((brand, index) => (
+                <option key={index} value={brand} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Custom Date</label>
+            <input
+              type="date"
+              name="customDate"
+              value={companyFormData.customDate}
+              onChange={handleCompanyFormChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Total Items</label>
