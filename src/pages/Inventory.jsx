@@ -110,10 +110,12 @@ const Dashboard = () => {
         returned: 0,
         store: 0,
         shop: 0,
+        latestDate: item.date ? new Date(item.date) : new Date(0), // Initialize with item date
       };
       entry.bought += parseInt(item.quantity, 10) || 0;
       entry.store += parseInt(item.store, 10) || 0;
       entry.shop += parseInt(item.shop, 10) || 0;
+      entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
 
@@ -127,11 +129,13 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
-        store: map.get(key)?.store || 0, // Keep store quantity from buyData
+        store: map.get(key)?.store || 0,
         shop: map.get(key)?.shop || 0,
+        latestDate: item.date ? new Date(item.date) : new Date(0),
       };
       entry.sold += parseInt(item.quantity, 10) || 0;
-      entry.shop = Math.max((map.get(key)?.shop || 0) - parseInt(item.quantity, 10) || 0, 0); // Update shop quantity only
+      entry.shop = Math.max((map.get(key)?.shop || 0) - parseInt(item.quantity, 10) || 0, 0);
+      entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
 
@@ -145,12 +149,14 @@ const Dashboard = () => {
         bought: 0,
         sold: 0,
         returned: 0,
-        store: map.get(key)?.store || 0, // Keep store quantity from buyData
+        store: map.get(key)?.store || 0,
         shop: map.get(key)?.shop || 0,
+        latestDate: item.date ? new Date(item.date) : new Date(0),
       };
       entry.returned += parseInt(item.returnQuantity, 10) || 0;
       entry.sold = Math.max(entry.sold - entry.returned, 0);
-      entry.shop = Math.max(entry.shop + parseInt(item.returnQuantity, 10) || 0, 0); // Adjust shop for returns
+      entry.shop = Math.max(entry.shop + parseInt(item.returnQuantity, 10) || 0, 0);
+      entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
 
@@ -158,6 +164,9 @@ const Dashboard = () => {
       ...item,
       stock: Math.max(item.bought - item.sold, 0),
     }));
+
+    // Sort summary by latestDate in descending order (latest first)
+    summary.sort((a, b) => b.latestDate.getTime() - a.latestDate.getTime());
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();

@@ -37,6 +37,12 @@ const BuyTyre = () => {
     const unsub = onSnapshot(collection(db, "purchasedTyres"), (snapshot) => {
       let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       data = filterByDateRange(data, startDate, endDate);
+      // Sort by date in descending order (latest first)
+      data.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
       setTyres(data);
     });
     return () => unsub();
@@ -113,7 +119,7 @@ const BuyTyre = () => {
   const handleDelete = async (tyre) => {
     try {
       await deleteDoc(doc(db, "purchasedTyres", tyre.id));
-      setSelectedTyre(null); // Close modal if open
+      setSelectedTyre(null);
       toast.success("Tyre deleted successfully!");
     } catch (err) {
       toast.error("Error deleting tyre.");

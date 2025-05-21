@@ -509,82 +509,76 @@ const Return = () => {
           ))}
         </div>
       </div>
+
       {selectedReturn && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 min-h-screen bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
           <div
             className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none"
             id="printable"
           >
             {/* Header */}
-            <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-              <div className="flex items-center gap-2">
-                <img src="/path/to/logo.png" alt="Logo" className="w-16 h-16" />
-                <div>
-                  <h2 className="text-2xl font-bold text-red-600">سائی ٹائر سنٹر</h2>
-                  <p className="text-sm text-gray-600">0317-7951283, 0307-7327931</p>
-                  <p className="text-sm text-gray-600">بہت ساری مصنوعات کی فروخت اور خریداری</p>
-                  <p className="text-sm text-gray-600">نوٹ: کوئی گارنٹی امپورٹڈ ٹائرز پر نہیں</p>
-                </div>
+            <div className="relative bg-gradient-to-r from-blue-700 to-gray-800 text-white p-10 rounded-t-xl mb-0">
+              <div className="absolute text-white flex justify-center gap-8 text-md top-0 left-2 font-semibold">
+                <p>تاریخ: <time>{selectedReturn.date}</time></p>
               </div>
-              <img src="/path/to/car.png" alt="Car" className="w-32 h-32 opacity-50" />
+              <div className="text-center">
+                <h2 className="text-5xl font-bold">سرحد ٹائر ٹریڈرز</h2>
+              </div>
+              <div className="absolute font-bold px-5 right-50 opacity-70 bg-white rounded-xl text-black z-10 bottom-0">شیر شاہ روڈ نزد مسجد القادر ڈیرہ اڈا ملتان</div>
             </div>
 
             {/* Invoice Title and Details */}
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-gray-900">انوائس</h2>
+            <div className="text-center gap-4 mb-6">
+              <p className="flex justify-around text-md text-left font-bold" dir="ltr">
+                <span>0317-7951283 - <span dir="rtl">عبدالستار</span></span>
+                <span>0307-7327931 - <span dir="rtl">یٰسین خان</span></span>
+                <span>0307-7177613 - <span dir="rtl">گوہر خان</span></span>
+              </p>
               <hr className="my-2 border-gray-300" />
-              <div className="flex justify-center gap-8 text-sm text-gray-700">
-                <p>تاریخ: <time>{selectedReturn.date}</time></p>
-                <p>انوائس نمبر: {selectedReturn.id}</p>
-              </div>
             </div>
 
             {/* Customer and Tyre Details */}
-            <div className="grid grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
-              <div>
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
-                <p><span className="font-medium">صارف:</span> {selectedReturn.customer}</p>
-                <p><span className="font-medium">کمپنی:</span> {selectedReturn.company}</p>
-              </div>
-              <div>
+            <div className="flex justify-between md:grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
+              <div></div> {/* Empty div for spacing */}
+              <div className="text-right">
                 <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
-                <p><span className="font-medium">برانڈ:</span> {selectedReturn.brand}</p>
+                <p><span className="font-medium">{selectedReturn.brand} : برانڈ</span></p>
                 <p><span className="font-medium">ماڈل:</span> {selectedReturn.model}</p>
                 <p><span className="font-medium">سائز:</span> {selectedReturn.size}</p>
+              </div>
+              <div className="text-right">
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
+                <p><span className="font-medium"> {selectedReturn.customer} : صارف کا نام</span></p>
+                <p><span className="font-medium"> {selectedReturn.company} : کمپنی کا نام</span></p>
               </div>
             </div>
 
             {/* Pricing Summary */}
             <div className="mb-6">
-              <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">قیمت کا خلاصہ</h3>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700">
-                <p className="font-medium">اصل مقدار:</p>
+              <div className="text-right mb-2">
+                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 inline-block">قیمت کا خلاصہ</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 text-right">
                 <p>{selectedReturn.quantity}</p>
-                <p className="font-medium">واپس مقدار:</p>
+                <p className="font-medium">اصل مقدار:</p>
                 <p>{selectedReturn.returnQuantity}</p>
-                <p className="font-medium">فی ٹائر قیمت:</p>
+                <p className="font-medium">واپس مقدار:</p>
                 <p>Rs. {selectedReturn.price}</p>
-                <p className="font-medium">واپس قیمت فی ٹائر:</p>
+                <p className="font-medium">فی ٹائر قیمت:</p>
                 <p>Rs. {selectedReturn.returnPrice}</p>
-                <p className="font-medium">رعایت:</p>
+                <p className="font-medium">واپس قیمت فی ٹائر:</p>
                 <p>{selectedReturn.discount || 0}</p>
-                <p className="font-medium">بقایا رقم:</p>
+                <p className="font-medium">رعایت:</p>
                 <p>Rs. {selectedReturn.due || 0}</p>
-                <p className="font-bold text-lg">کل قیمت:</p>
+                <p className="font-medium">بقایا رقم:</p>
                 <p className="font-bold text-lg">Rs. {selectedReturn.returnTotalPrice}</p>
+                <p className="font-bold text-lg">کل قیمت:</p>
               </div>
             </div>
 
             {/* Note */}
             <div className="text-center mb-6">
-              <p className="text-sm text-gray-600">نوٹ: یہ انوائس حتمی ہے۔</p>
-            </div>
-
-            {/* Footer */}
-            <div className="text-center text-red-600 border-t border-gray-200 pt-4">
-              <img src="/path/to/wheel.png" alt="Wheel" className="w-12 h-12 mx-auto mb-2" />
-              <p className="text-sm font-semibold">نوٹ: ہماری ویب سائٹ پر وزٹ کریں</p>
-              <p className="text-sm font-semibold">سائی ٹائر سنٹر - ڈاینامو ٹائر</p>
+              <p className="text-sm text-gray-600">نوٹ: ہمارے ہاں ہر قسم کے گاڑیوں کے نیو امپورٹڈ ٹائر اور رم دستیاب ہیں ۔</p>
             </div>
 
             {/* Buttons (Hidden on Print) */}

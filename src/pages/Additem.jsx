@@ -9,13 +9,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
-
-// Add new imports for date picker
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 
-// Add helper function for date range filtering
 const filterByDateRange = (data, start, end) => {
   if (!start || !end) return data;
   return data.filter(item => {
@@ -40,19 +37,22 @@ const AddItem = () => {
   const [purchasedTyres, setPurchasedTyres] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
-  // Add state for date range
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchLocalTyres = async () => {
       try {
         const snapshot = await getDocs(collection(db, "addItemTyres"));
         let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        // Add date range filtering
         data = filterByDateRange(data, startDate, endDate);
+        // Sort by date in descending order (latest first)
+        data.sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA;
+        });
         setLocalTyres(data);
       } catch (error) {
         console.error("Error fetching local tyres:", error);
@@ -72,7 +72,7 @@ const AddItem = () => {
 
     fetchLocalTyres();
     fetchPurchasedTyres();
-  }, [startDate, endDate]); // Add dependencies for date range
+  }, [startDate, endDate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -235,7 +235,7 @@ const AddItem = () => {
       }
 
       setForm({
-        company:"",
+        company: "",
         brand: "",
         model: "",
         size: "",
@@ -245,7 +245,15 @@ const AddItem = () => {
       });
 
       const snapshot = await getDocs(collection(db, "addItemTyres"));
-      setLocalTyres(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      data = filterByDateRange(data, startDate, endDate);
+      // Sort by date in descending order (latest first)
+      data.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+      setLocalTyres(data);
     } catch (error) {
       console.error("Submit error:", error);
       toast.error("Failed to submit item");
@@ -270,7 +278,15 @@ const AddItem = () => {
       toast.success("Item deleted");
 
       const snapshot = await getDocs(collection(db, "addItemTyres"));
-      setLocalTyres(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      data = filterByDateRange(data, startDate, endDate);
+      // Sort by date in descending order (latest first)
+      data.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+      setLocalTyres(data);
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete item");
@@ -289,7 +305,6 @@ const AddItem = () => {
     );
   });
 
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredTyres.slice(indexOfFirstItem, indexOfLastItem);
@@ -415,7 +430,6 @@ const AddItem = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border rounded p-2 mt-5"
         />
-        {/* Add date range picker UI */}
         <div className="flex gap-2 mt-4">
           <div className="relative">
             <DatePicker
@@ -495,7 +509,6 @@ const AddItem = () => {
               ))}
             </tbody>
           </table>
-          {/* Pagination */}
           <div className="p-4 flex justify-center gap-2">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
               <button
