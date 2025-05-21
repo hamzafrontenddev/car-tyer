@@ -219,30 +219,42 @@ const SellTyre = () => {
       const firstMatch = matches[0];
 
       setAvailableSizes(uniqueSizes);
-      setForm((prev) => ({
-        ...prev,
-        size: firstMatch.size || "",
-        price: firstMatch.price || "",
-      }));
-
-      // Fetch shopQuantity from purchasedTyres
-      const fetchShopQuantity = async () => {
-        const purchasedQuery = query(
-          collection(db, "purchasedTyres"),
-          where("company", "==", form.company),
-          where("brand", "==", form.brand),
-          where("model", "==", model),
-          where("size", "==", firstMatch.size || "")
-        );
-        const purchasedSnapshot = await getDocs(purchasedQuery);
-        const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
-        const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
-        setForm((prev) => ({
+      setForm((prev) => {
+        const updatedForm = {
           ...prev,
-          shopQuantity: totalShopQty.toString(),
-        }));
-      };
-      fetchShopQuantity();
+          size: firstMatch.size || "",
+          price: firstMatch.price || "",
+        };
+
+        // Fetch shopQuantity from purchasedTyres with updated form values
+        const fetchShopQuantity = async () => {
+          const querySize = updatedForm.size || firstMatch.size || "";
+          console.log("Query Inputs:", {
+            company: updatedForm.company.trim().toLowerCase(),
+            brand: updatedForm.brand.trim().toLowerCase(),
+            model: model.trim().toLowerCase(),
+            size: querySize.toLowerCase()
+          }); // Debugging
+          const purchasedQuery = query(
+            collection(db, "purchasedTyres"),
+            where("company", "==", updatedForm.company.trim()),
+            where("brand", "==", updatedForm.brand.trim()),
+            where("model", "==", model.trim()),
+            where("size", "==", querySize)
+          );
+          const purchasedSnapshot = await getDocs(purchasedQuery);
+          const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
+          console.log("Purchased Tyres:", purchasedTyres); // Debugging
+          const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
+          setForm((prevForm) => ({
+            ...prevForm,
+            shopQuantity: totalShopQty.toString(),
+          }));
+        };
+        fetchShopQuantity();
+
+        return updatedForm;
+      });
     } else {
       setAvailableSizes([]);
     }

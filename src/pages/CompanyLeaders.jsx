@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Modal from 'react-modal';
+import Modal from 'react-modal'
 
 Modal.setAppElement('#root');
 
