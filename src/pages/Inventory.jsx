@@ -100,11 +100,11 @@ const Dashboard = () => {
 
     // Initialize with buy data
     filteredBuy.forEach((item) => {
-      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand?.toLowerCase() || "N/A"}_${item.size?.toLowerCase() || "N/A"}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
         company: item.company || "N/A",
-        brand: item.brand,
-        size: item.size,
+        brand: item.brand || "N/A",
+        size: item.size || "N/A",
         model: item.model || "N/A",
         bought: 0,
         sold: 0,
@@ -120,13 +120,16 @@ const Dashboard = () => {
       map.set(key, entry);
     });
 
+    // Log the map after buy data to verify shop quantity initialization
+    console.log("Map after buy data:", Array.from(map.entries()));
+
     // Process sales
     filteredSell.forEach((item) => {
-      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand?.toLowerCase() || "N/A"}_${item.size?.toLowerCase() || "N/A"}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
         company: item.company || "N/A",
-        brand: item.brand,
-        size: item.size,
+        brand: item.brand || "N/A",
+        size: item.size || "N/A",
         model: item.model || "N/A",
         bought: 0,
         sold: 0,
@@ -143,13 +146,16 @@ const Dashboard = () => {
       map.set(key, entry);
     });
 
+    // Log the map after sell data to verify shop quantity deduction
+    console.log("Map after sell data:", Array.from(map.entries()));
+
     // Process returns
     filteredReturns.forEach((item) => {
-      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand.toLowerCase()}_${item.size.toLowerCase()}_${(item.model || "N/A").toLowerCase()}`;
+      const key = `${(item.company || "N/A").toLowerCase()}_${item.brand?.toLowerCase() || "N/A"}_${item.size?.toLowerCase() || "N/A"}_${(item.model || "N/A").toLowerCase()}`;
       const entry = map.get(key) || {
         company: item.company || "N/A",
-        brand: item.brand,
-        size: item.size,
+        brand: item.brand || "N/A",
+        size: item.size || "N/A",
         model: item.model || "N/A",
         bought: 0,
         sold: 0,
@@ -184,6 +190,9 @@ const Dashboard = () => {
         item.model?.toLowerCase().includes(query)
       );
     }
+
+    // Log the final summary to verify shop quantities
+    console.log("Final Stock Summary:", summary);
 
     setStockSummary(summary);
   }, [buyData, sellData, returnData, selectedBrand, startDate, endDate, selectedDate, searchQuery]);
