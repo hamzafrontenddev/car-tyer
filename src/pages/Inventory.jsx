@@ -65,6 +65,9 @@ const Dashboard = () => {
   }, [buyData]);
 
   useEffect(() => {
+    // Wait for buyData to load to avoid race conditions
+    if (!buyData.length) return;
+
     let filteredBuy = [...buyData];
     let filteredSell = [...sellData];
     let filteredReturns = [...returnData];
@@ -126,18 +129,21 @@ const Dashboard = () => {
     // Process sales
     filteredSell.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand?.toLowerCase() || "N/A"}_${item.size?.toLowerCase() || "N/A"}_${(item.model || "N/A").toLowerCase()}`;
-      const entry = map.get(key) || {
-        company: item.company || "N/A",
-        brand: item.brand || "N/A",
-        size: item.size || "N/A",
-        model: item.model || "N/A",
-        bought: 0,
-        sold: 0,
-        returned: 0,
-        store: 0,
-        shop: 0,
-        latestDate: item.date ? new Date(item.date) : new Date(0),
-      };
+      let entry = map.get(key);
+      if (!entry) {
+        entry = {
+          company: item.company || "N/A",
+          brand: item.brand || "N/A",
+          size: item.size || "N/A",
+          model: item.model || "N/A",
+          bought: 0,
+          sold: 0,
+          returned: 0,
+          store: 0,
+          shop: 0,
+          latestDate: item.date ? new Date(item.date) : new Date(0),
+        };
+      }
       const soldQty = parseInt(item.quantity, 10) || 0;
       entry.sold += soldQty;
       // Deduct from shop quantity, ensuring it doesn't go below 0
@@ -152,18 +158,21 @@ const Dashboard = () => {
     // Process returns
     filteredReturns.forEach((item) => {
       const key = `${(item.company || "N/A").toLowerCase()}_${item.brand?.toLowerCase() || "N/A"}_${item.size?.toLowerCase() || "N/A"}_${(item.model || "N/A").toLowerCase()}`;
-      const entry = map.get(key) || {
-        company: item.company || "N/A",
-        brand: item.brand || "N/A",
-        size: item.size || "N/A",
-        model: item.model || "N/A",
-        bought: 0,
-        sold: 0,
-        returned: 0,
-        store: 0,
-        shop: 0,
-        latestDate: item.date ? new Date(item.date) : new Date(0),
-      };
+      let entry = map.get(key);
+      if (!entry) {
+        entry = {
+          company: item.company || "N/A",
+          brand: item.brand || "N/A",
+          size: item.size || "N/A",
+          model: item.model || "N/A",
+          bought: 0,
+          sold: 0,
+          returned: 0,
+          store: 0,
+          shop: 0,
+          latestDate: item.date ? new Date(item.date) : new Date(0),
+        };
+      }
       const returnQty = parseInt(item.returnQuantity, 10) || 0;
       entry.returned += returnQty;
       entry.sold = Math.max(entry.sold - returnQty, 0);
