@@ -10,6 +10,7 @@ import Return from "./pages/Return";
 import CompanyLeaders from "./pages/CompanyLeaders";
 import ProfitLoss from "./pages/ProfitLoss";
 import Transfer from "./pages/Transfer";
+import PendingDues from "./pages/PendingDues";
 
 function App() {
   return (
@@ -99,7 +100,16 @@ function App() {
             >
               Transfor Data
             </NavLink>
-
+            <NavLink
+              to="/pending-dues"
+              className={({ isActive }) =>
+                `font-semibold transition duration-200 ${
+                  isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`
+              }
+            >
+              Pending Dues
+            </NavLink>
           </div>
         </nav>
 
@@ -114,6 +124,7 @@ function App() {
             <Route path="/companies" element={<CompanyLeaders />} />
             <Route path="/profit-loss" element={<ProfitLoss />} />
             <Route path="/transfor-data" element={<Transfer />} />
+            <Route path="/pending-dues" element={<PendingDues />} />
           </Routes>
         </div>
 
