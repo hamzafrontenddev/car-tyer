@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Login = () => {
-  const [email, setEmail] = useState("test@example.com");
-  const [password, setPassword] = useState("Password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
@@ -39,8 +39,8 @@ const Login = () => {
     if (!validateForm()) return;
 
     // Dummy authentication logic
-    const validEmail = "test@example.com";
-    const validPassword = "Password123";
+    const validEmail = "hamza@gmail.com";
+    const validPassword = "hamza7811";
 
     try {
       if (email === validEmail && password === validPassword) {
