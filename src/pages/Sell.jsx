@@ -752,9 +752,9 @@ const SellTyre = () => {
             {/* Invoice Title and Details */}
             <div className="text-center gap-4 mb-6">
               <p className="flex justify-around text-md text-left font-bold" dir="ltr">
-                <span>0317-7951283 - <span dir="rtl">عبدالستار</span></span>
-                <span>0307-7327931 - <span dir="rtl">یٰسین خان</span></span>
-                <span>0307-7177613 - <span dir="rtl">گوہر خان</span></span>
+                <span>0317-7951263 - <span dir="rtl">  گوہر خان  </span></span>
+                <span>0307-7717613 - <span dir="rtl">یٰسین خان</span></span>
+                <span>0307-7327931 - <span dir="rtl">عبدالستار </span></span>
               </p>
               <hr className="my-2 border-gray-300" />
             </div>
