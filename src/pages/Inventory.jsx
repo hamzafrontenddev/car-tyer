@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
+import { GiFlatTire } from "react-icons/gi";
+import { FaRupeeSign } from "react-icons/fa6";
 import {
-  ShoppingCartIcon,
-  CurrencyDollarIcon,
+  HomeIcon,
+  CurrencyRupeeIcon,
   ChartBarIcon,
   TruckIcon,
   CubeIcon,
@@ -260,12 +262,12 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <StatCard title="Total Buy Product" value={totalBought} icon={<ShoppingCartIcon className="w-8 h-8 text-blue-600" />} />
+        <StatCard title="Total Buy Product" value={totalBought} icon={<GiFlatTire className="w-8 h-8 text-blue-600" />} />
         <StatCard title="Total Sold" value={totalSold} icon={<TruckIcon className="w-8 h-8 text-green-600" />} />
         <StatCard title="Available Stock" value={availableStock} icon={<CubeIcon className="w-8 h-8 text-yellow-500" />} />
-        <StatCard title="Total Store Quantity" value={totalStore} icon={<CubeIcon className="w-8 h-8 text-purple-600" />} />
+        <StatCard title="Total Store Quantity" value={totalStore} icon={<HomeIcon className="w-8 h-8 text-purple-600" />} />
         <StatCard title="Total Shop Quantity" value={totalShop} icon={<CubeIcon className="w-8 h-8 text-purple-600" />} />
-        <StatCard title="Total Buy Cost" value={`Rs. ${totalBuyCost.toLocaleString()}`} icon={<CurrencyDollarIcon className="w-8 h-8 text-purple-600" />} />
+        <StatCard title="Total Buy Cost" value={`Rs. ${totalBuyCost.toLocaleString()}`} icon={<FaRupeeSign className="w-8 h-8 text-purple-600" />} />
         <StatCard title="Total Sales" value={`Rs. ${adjustedTotalSales.toLocaleString()}`} icon={<ChartBarIcon className="w-8 h-8 text-teal-600" />} />
         <StatCard title="Profit" value={`Rs. ${profit.toLocaleString()}`} icon={<BanknotesIcon className="w-8 h-8 text-green-600" />} />
       </div>
