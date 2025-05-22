@@ -2,13 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 import { collection, addDoc, onSnapshot, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
-
-// Add new imports for date picker
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 
-// Add helper function for date range filtering
 const filterByDateRange = (data, start, end) => {
   if (!start || !end) return data;
   return data.filter(item => {
@@ -22,28 +19,23 @@ const Return = () => {
   const [returns, setReturns] = useState([]);
   const [manualReturnPrice, setManualReturnPrice] = useState("");
   const [selectedReturn, setSelectedReturn] = useState(null);
-
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [returnQuantity, setReturnQuantity] = useState("");
-  const [discount, setDiscount] = useState(""); // Read-only discount
-  const [due, setDue] = useState(""); // New read-only due field
-
+  const [discount, setDiscount] = useState("");
+  const [due, setDue] = useState("");
   const [date, setDate] = useState("");
+  const [comment, setComment] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerInputRef = useRef(null);
-
   const itemsPerPage = 5;
-
-  // Add state for date range
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
@@ -56,7 +48,6 @@ const Return = () => {
 
     const unsub2 = onSnapshot(collection(db, "returnedTyres"), (snapshot) => {
       let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      // Add date range filtering
       data = filterByDateRange(data, startDate, endDate);
       setReturns(data);
     });
@@ -65,10 +56,9 @@ const Return = () => {
       unsub1();
       unsub2();
     };
-  }, [startDate, endDate]); // Add dependencies for date range
+  }, [startDate, endDate]);
 
   const customers = [...new Set(soldTyres.map((t) => t.customerName).filter((c) => c && c.trim() !== ""))];
-
   const companies = [
     ...new Set(
       soldTyres.filter((t) => t.customerName === selectedCustomer).map((t) => t.company)
@@ -119,12 +109,12 @@ const Return = () => {
       setPrice(match.price);
       setQuantity(match.quantity);
       setDiscount(match.discount || 0);
-      setDue(match.due || 0); // Fetch due from soldTyres
+      setDue(match.due || 0);
     } else {
       setPrice("");
       setQuantity("");
       setDiscount("");
-      setDue(""); // Reset due if no match
+      setDue("");
     }
   }, [selectedCustomer, selectedCompany, selectedBrand, selectedModel, selectedSize, soldTyres]);
 
@@ -173,14 +163,14 @@ const Return = () => {
       returnPrice: Number(manualReturnPrice),
       returnTotalPrice: Number(manualReturnPrice) * Number(returnQuantity),
       date,
-      discount: Number(discount), // Include discount
-      due: Number(due), // Include due
+      discount: Number(discount),
+      due: Number(due),
+      comment: comment || "",
     };
 
     try {
       await addDoc(collection(db, "returnedTyres"), returnTyre);
 
-      // Update shop quantity in purchasedTyres
       const purchasedQuery = query(
         collection(db, "purchasedTyres"),
         where("company", "==", selectedCompany),
@@ -199,13 +189,11 @@ const Return = () => {
         return;
       }
 
-      // Validate return quantity
       if (Number(returnQuantity) > Number(quantity)) {
         toast.error("Return quantity cannot exceed original sold quantity");
         return;
       }
 
-      // Update shop quantity for the first matching document
       const targetTyre = purchasedTyres[0];
       const currentShop = parseInt(targetTyre.shop) || 0;
       const newShopQuantity = currentShop + Number(returnQuantity);
@@ -227,9 +215,10 @@ const Return = () => {
       setQuantity("");
       setReturnQuantity("");
       setDiscount("");
-      setDue(""); // Reset due after submission
+      setDue("");
       setDate("");
-      setShowCustomerDropdown(false); // Hide dropdown after submission
+      setComment("");
+      setShowCustomerDropdown(false);
     } catch (err) {
       toast.error("Error returning tyre.");
     }
@@ -241,7 +230,6 @@ const Return = () => {
       .includes(search.toLowerCase())
   );
 
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredReturns.slice(indexOfFirstItem, indexOfLastItem);
@@ -262,7 +250,7 @@ const Return = () => {
             value={selectedCustomer}
             onChange={(e) => setSelectedCustomer(e.target.value)}
             onFocus={() => setShowCustomerDropdown(true)}
-            onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)} // Delay to allow click on dropdown
+            onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
             className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           {showCustomerDropdown && (
@@ -277,7 +265,7 @@ const Return = () => {
                     onClick={() => {
                       setSelectedCustomer(c);
                       setShowCustomerDropdown(false);
-                      customerInputRef.current?.blur(); // Remove focus to hide dropdown
+                      customerInputRef.current?.blur();
                     }}
                     className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                   >
@@ -393,6 +381,13 @@ const Return = () => {
           onChange={(e) => setDate(e.target.value)}
           className="border border-gray-300 rounded px-3 py-2"
         />
+        <input
+          type="text"
+          placeholder="Add Comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-2 w-full"
+        />
         <button
           type="submit"
           className="bg-blue-600 text-white font-semibold rounded px-6 py-2 hover:bg-blue-700 transition"
@@ -409,7 +404,6 @@ const Return = () => {
           onChange={(e) => setSearch(e.target.value)}
           className="mb-4 border border-gray-300 rounded px-3 py-2"
         />
-        {/* Add date range picker UI */}
         <div className="flex gap-2 mb-4">
           <div className="relative">
             <DatePicker
@@ -461,42 +455,56 @@ const Return = () => {
               <th className="py-2 px-4 font-semibold">Discount</th>
               <th className="py-2 px-4 font-semibold">Due</th>
               <th className="py-2 px-4 font-semibold">Date</th>
-              <th className="py-2 px-4 font-semibold">Status</th>
+              <th className="py-2 px-4 font-semibold min-w-[200px]">Comment</th>
               <th className="py-2 px-4 font-semibold">Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {currentItems.map((t) => (
-              <tr key={t.id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-2 px-4">{t.customer}</td>
-                <td className="py-2 px-4">{t.company}</td>
-                <td className="py-2 px-4">{t.brand}</td>
-                <td className="py-2 px-4">{t.model}</td>
-                <td className="py-2 px-4">{t.size}</td>
-                <td className="py-2 px-4">{t.quantity}</td>
-                <td className="py-2 px-4">Rs. {t.price}</td>
-                <td className="py-2 px-4">Rs. {t.totalPrice}</td>
-                <td className="py-2 px-4">{t.returnQuantity}</td>
-                <td className="py-2 px-4">Rs. {t.returnPrice}</td>
-                <td className="py-2 px-4">Rs. {t.returnTotalPrice}</td>
-                <td className="py-2 px-4">{`${t.discount || 0}`}</td>
-                <td className="py-2 px-4">Rs. {t.due || 0}</td>
-                <td className="py-2 px-4">{t.date}</td>
-                <td className="py-2 px-4">Returned</td>
-                <td className="py-2 px-4">
-                  <button
-                    onClick={() => setSelectedReturn(t)}
-                    className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
-                  >
-                    View
-                  </button>
+            {currentItems.length > 0 ? (
+              currentItems.map((t) => (
+                <tr key={t.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <td className="py-2 px-4">{t.customer}</td>
+                  <td className="py-2 px-4">{t.company}</td>
+                  <td className="py-2 px-4">{t.brand}</td>
+                  <td className="py-2 px-4">{t.model}</td>
+                  <td className="py-2 px-4">{t.size}</td>
+                  <td className="py-2 px-4">{t.quantity}</td>
+                  <td className="py-2 px-4">Rs. {t.price}</td>
+                  <td className="py-2 px-4">Rs. {t.totalPrice}</td>
+                  <td className="py-2 px-4">{t.returnQuantity}</td>
+                  <td className="py-2 px-4">Rs. {t.returnPrice}</td>
+                  <td className="py-2 px-4">Rs. {t.returnTotalPrice}</td>
+                  <td className="py-2 px-4">{`${t.discount || 0}`}</td>
+                  <td className="py-2 px-4">Rs. {t.due || 0}</td>
+                  <td className="py-2 px-4">{t.date}</td>
+                  <td className="py-2 px-4 min-w-[200px]">
+                    <textarea
+                      value={t.comment || ""}
+                      readOnly
+                      rows="2"
+                      className="border border-gray-300 p-2 rounded w-full min-w-[200px] resize-none"
+                    />
+                  </td>
+                  <td className="py-2 px-4">
+                    <button
+                      onClick={() => setSelectedReturn(t)}
+                      className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="16" className="text-center py-4 text-gray-500">
+                  No returns found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-        {/* Pagination */}
         <div className="p-4 flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
             <button
@@ -516,7 +524,6 @@ const Return = () => {
             className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none"
             id="printable"
           >
-            {/* Header */}
             <div className="relative bg-gradient-to-r from-blue-700 to-gray-800 text-white p-10 rounded-t-xl mb-0">
               <div className="absolute text-white flex justify-center gap-8 text-md top-0 left-2 font-semibold">
                 <p>تاریخ: <time>{selectedReturn.date}</time></p>
@@ -527,7 +534,6 @@ const Return = () => {
               <div className="absolute font-bold px-5 right-50 opacity-70 bg-white rounded-xl text-black z-10 bottom-0">شیر شاہ روڈ نزد مسجد القادر ڈیرہ اڈا ملتان</div>
             </div>
 
-            {/* Invoice Title and Details */}
             <div className="text-center gap-4 mb-6">
               <p className="flex justify-around text-md text-left font-bold" dir="ltr">
                 <span>0317-7951263 - <span dir="rtl">  گوہر خان    </span></span>
@@ -537,9 +543,8 @@ const Return = () => {
               <hr className="my-2 border-gray-300" />
             </div>
 
-            {/* Customer and Tyre Details */}
             <div className="flex justify-between md:grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
-              <div></div> {/* Empty div for spacing */}
+              <div></div>
               <div className="text-right">
                 <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
                 <p><span className="font-medium">{selectedReturn.brand} : برانڈ</span></p>
@@ -553,7 +558,6 @@ const Return = () => {
               </div>
             </div>
 
-            {/* Pricing Summary */}
             <div className="mb-6">
               <div className="text-right mb-2">
                 <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 inline-block">قیمت کا خلاصہ</h3>
@@ -576,12 +580,10 @@ const Return = () => {
               </div>
             </div>
 
-            {/* Note */}
             <div className="text-center mb-6">
               <p className="text-sm text-gray-600">نوٹ: ہمارے ہاں ہر قسم کے گاڑیوں کے نیو امپورٹڈ ٹائر اور رم دستیاب ہیں ۔</p>
             </div>
 
-            {/* Buttons (Hidden on Print) */}
             <div className="flex justify-between items-center text-gray-600 text-sm print:hidden mt-6">
               <p>Status: <span className="font-semibold text-green-600">Returned</span></p>
               <div className="flex gap-3">

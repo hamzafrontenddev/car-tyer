@@ -34,7 +34,8 @@ const SellTyre = () => {
     date: new Date().toISOString().split("T")[0],
     discount: "",
     due: "",
-    shopQuantity: "", // Added shopQuantity
+    shopQuantity: "",
+    comment: "",
   });
 
   const printRef = useRef();
@@ -139,7 +140,8 @@ const SellTyre = () => {
       date: prev.date || new Date().toISOString().split("T")[0],
       discount: prev.discount || "",
       due: prev.due || "",
-      shopQuantity: "", // Reset shopQuantity
+      shopQuantity: "",
+      comment: prev.comment || "",
     }));
 
     const brands = itemTyres
@@ -171,7 +173,8 @@ const SellTyre = () => {
       date: prev.date || new Date().toISOString().split("T")[0],
       discount: prev.discount || "",
       due: prev.due || "",
-      shopQuantity: "", // Reset shopQuantity
+      shopQuantity: "",
+      comment: prev.comment || "",
     }));
 
     const models = itemTyres
@@ -204,7 +207,8 @@ const SellTyre = () => {
       date: prev.date || new Date().toISOString().split("T")[0],
       discount: prev.discount || "",
       due: prev.due || "",
-      shopQuantity: "", // Reset shopQuantity
+      shopQuantity: "",
+      comment: prev.comment || "",
     }));
 
     const matches = itemTyres.filter(
@@ -275,6 +279,7 @@ const SellTyre = () => {
         ...prev,
         size,
         price: match.price || "",
+        comment: prev.comment || "",
       }));
 
       // Fetch shopQuantity from purchasedTyres
@@ -296,7 +301,7 @@ const SellTyre = () => {
       };
       fetchShopQuantity();
     } else {
-      setForm((prev) => ({ ...prev, size, shopQuantity: "" }));
+      setForm((prev) => ({ ...prev, size, shopQuantity: "", comment: prev.comment || "" }));
     }
   };
 
@@ -433,6 +438,7 @@ const SellTyre = () => {
       discount,
       due,
       payableAmount,
+      comment: form.comment || "",
     };
 
     try {
@@ -456,7 +462,8 @@ const SellTyre = () => {
         date: new Date().toISOString().split("T")[0],
         discount: "",
         due: "",
-        shopQuantity: "", // Reset shopQuantity
+        shopQuantity: "",
+        comment: "",
       });
       setCustomerName("");
       setAvailableBrands([]);
@@ -596,6 +603,14 @@ const SellTyre = () => {
           readOnly
           className="border border-gray-300 p-2 rounded w-full bg-gray-100"
         />
+        <input
+          type="text"
+          name="comment"
+          placeholder="Add Comment"
+          value={form.comment}
+          onChange={handleChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
       </div>
 
       <button
@@ -663,6 +678,7 @@ const SellTyre = () => {
               <th className="p-3">Discount</th>
               <th className="p-3">Due</th>
               <th className="p-3">Date</th>
+              <th className="p-3">Comment</th>
               <th className="p-3">Actions</th>
             </tr>
           </thead>
@@ -681,6 +697,14 @@ const SellTyre = () => {
                   <td className="p-3">Rs. {tyre.discount || 0}</td>
                   <td className="p-3">Rs. {tyre.due || 0}</td>
                   <td className="p-3">{tyre.date}</td>
+                  <td className="p-3">
+                    <textarea
+                      value={tyre.comment || ""}
+                      readOnly
+                      rows="2"
+                      className="border border-gray-300 p-2 rounded w-full resize-none"
+                    />
+                  </td>
                   <td className="p-3 flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -694,7 +718,8 @@ const SellTyre = () => {
                           date: tyre.date || new Date().toISOString().split("T")[0],
                           discount: tyre.discount || "",
                           due: tyre.due || "",
-                          shopQuantity: "", // Initialize shopQuantity as empty for edit
+                          shopQuantity: "",
+                          comment: tyre.comment || "",
                         });
                         setEditId(tyre.id);
                         setCustomerName(tyre.customerName || '');
@@ -715,7 +740,7 @@ const SellTyre = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="12" className="text-center p-6 text-gray-500">
+                <td colSpan="13" className="text-center p-6 text-gray-500">
                   No tyres sold yet.
                 </td>
               </tr>
