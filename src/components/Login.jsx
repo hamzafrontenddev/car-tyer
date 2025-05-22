@@ -62,7 +62,7 @@ const Login = () => {
       <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transform transition-all duration-300 hover:scale-105">
         <div className="flex justify-center mb-6">
           <h2 className="text-3xl font-extrabold text-gray-800 text-center">
-            Sarhad Tyre
+            Sarhad Tyres
           </h2>
         </div>
         <h3 className="text-xl font-semibold text-gray-700 mb-6 text-center">🔒 Secure Login</h3>
