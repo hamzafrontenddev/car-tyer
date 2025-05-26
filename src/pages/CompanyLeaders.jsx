@@ -426,25 +426,25 @@ const CompanyLeaders = () => {
               <table className="min-w-full border-collapse text-sm text-left bg-white rounded-xl shadow-sm">
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                    <th className="py-3 px-6 font-semibold">Brand</th>
-                    <th className="py-3 px-6 font-semibold">Sizes</th>
-                    <th className="py-3 px-6 font-semibold">Total Items</th>
-                    <th className="py-3 px-6 font-semibold">Total Cost</th>
-                    <th className="py-3 px-6 font-semibold">Total Paid</th>
-                    <th className="py-3 px-6 font-semibold">Due</th>
-                    <th className="py-3 px-6 font-semibold">Purchase Date</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Brand</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Sizes</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Total Items</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Total Cost</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Total Paid</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Due</th>
+                    <th className="py-3 px-6 font-semibold border-1 border-black ">Purchase Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {getBrandSummary(selectedCompany.company).map((brand, index) => (
-                    <tr key={index} className="border-2 border-gray-200 hover:bg-gray-50 transition duration-200">
-                      <td className="py-3 px-6 border-1">{brand.brand}</td>
-                      <td className="py-3 px-6 border-1">{brand.sizes}</td>
-                      <td className="py-3 px-6 border-1">{brand.totalItems}</td>
-                      <td className="py-3 px-6 border-1">Rs. {brand.totalCost.toLocaleString()}</td>
-                      <td className="py-3 px-6 border-1">Rs. {brand.totalPaid.toLocaleString()}</td>
-                      <td className="py-3 px-6 border-1">Rs. {brand.due.toLocaleString()}</td>
-                      <td className="py-3 px-6 border-1">{brand.date}</td>
+                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="py-3 px-6 border-1 ">{brand.brand}</td>
+                      <td className="py-3 px-6 border-1 ">{brand.sizes}</td>
+                      <td className="py-3 px-6 border-1 ">{brand.totalItems}</td>
+                      <td className="py-3 px-6 border-1 ">Rs. {brand.totalCost.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1 ">Rs. {brand.totalPaid.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1 ">Rs. {brand.due.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1 ">{brand.date}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -504,7 +504,7 @@ const CompanyLeaders = () => {
             <label className="block text-sm font-medium mb-1 text-gray-700">Brand Name</label>
             <input
               type="text"
-              name="Name"
+              name="brandName"
               value={companyFormData.brandName}
               onChange={handleCompanyFormChange}
               list="brandNames"
