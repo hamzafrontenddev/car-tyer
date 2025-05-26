@@ -146,7 +146,7 @@ const BuyTyre = () => {
       <form className="grid grid-cols-3 gap-4 mb-6" onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Company"
+          placeholder="Name"
           value={company}
           onChange={(e) => setCompany(e.target.value)}
           className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
