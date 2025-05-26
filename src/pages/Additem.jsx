@@ -323,7 +323,7 @@ const AddItem = () => {
           <input
             list="company-list"
             name="company"
-            placeholder="Name"
+            placeholder="Party"
             value={form.company}
             onChange={handleChange}
             className="border px-4 py-2 rounded w-full"
