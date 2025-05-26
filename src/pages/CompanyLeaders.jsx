@@ -427,24 +427,24 @@ const CompanyLeaders = () => {
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                     <th className="py-3 px-6 font-semibold">Brand</th>
+                    <th className="py-3 px-6 font-semibold">Sizes</th>
                     <th className="py-3 px-6 font-semibold">Total Items</th>
                     <th className="py-3 px-6 font-semibold">Total Cost</th>
                     <th className="py-3 px-6 font-semibold">Total Paid</th>
                     <th className="py-3 px-6 font-semibold">Due</th>
-                    <th className="py-3 px-6 font-semibold">Sizes</th>
                     <th className="py-3 px-6 font-semibold">Purchase Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {getBrandSummary(selectedCompany.company).map((brand, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
-                      <td className="py-3 px-6">{brand.brand}</td>
-                      <td className="py-3 px-6">{brand.totalItems}</td>
-                      <td className="py-3 px-6">Rs. {brand.totalCost.toLocaleString()}</td>
-                      <td className="py-3 px-6">Rs. {brand.totalPaid.toLocaleString()}</td>
-                      <td className="py-3 px-6">Rs. {brand.due.toLocaleString()}</td>
-                      <td className="py-3 px-6">{brand.sizes}</td>
-                      <td className="py-3 px-6">{brand.date}</td>
+                    <tr key={index} className="border-2 border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="py-3 px-6 border-1">{brand.brand}</td>
+                      <td className="py-3 px-6 border-1">{brand.sizes}</td>
+                      <td className="py-3 px-6 border-1">{brand.totalItems}</td>
+                      <td className="py-3 px-6 border-1">Rs. {brand.totalCost.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1">Rs. {brand.totalPaid.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1">Rs. {brand.due.toLocaleString()}</td>
+                      <td className="py-3 px-6 border-1">{brand.date}</td>
                     </tr>
                   ))}
                 </tbody>
