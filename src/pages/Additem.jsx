@@ -315,7 +315,7 @@ const AddItem = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">
-        {selectedId ? "Edit Product" : "Add Item"}
+        {selectedId ? "Edit Product" : "Item Register"}
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

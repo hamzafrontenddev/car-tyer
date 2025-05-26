@@ -301,7 +301,7 @@ const CompanyLeaders = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
       <h1 className="text-4xl font-extrabold mb-8 text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-        Company Leaders Dashboard
+        Party Leaders Dashboard
       </h1>
       <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mb-8">
         <input
@@ -354,7 +354,7 @@ const CompanyLeaders = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="bg-gray-50 p-4 rounded-xl shadow-sm hover:shadow-md transition duration-200">
-                <p className="text-sm font-medium text-gray-600">Company Name</p>
+                <p className="text-sm font-medium text-gray-600">Party Name</p>
                 <p className="text-lg font-semibold text-gray-800">{selectedCompany.company}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow-sm hover:shadow-md transition duration-200">

@@ -739,86 +739,134 @@ const SellTyre = () => {
       </div>
 
       {viewTyre && (
-        <div className="fixed inset-0 min-h-screen bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-          <div ref={printRef} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none">
-            {/* Enhanced Header */}
-            <div className="relative bg-gradient-to-r from-blue-700 to-gray-800 text-white p-10 rounded-t-xl mb-0">
-              <div className="absolute text-white flex justify-center gap-8 text-md top-0 left-2 font-semibold">
-                <p>تاریخ: <time>{viewTyre.date}</time></p>
-              </div>
-              <div className="text-center">
-                <h2 className="text-5xl font-bold">سرحد ٹائر ٹریڈرز</h2>
-              </div>
-              <div className="absolute font-bold px-5 right-50 opacity-70 bg-white rounded-xl text-black z-10 bottom-0">شیر شاہ روڈ نزد مسجد القادر ڈیرہ اڈا ملتان</div>
-            </div>
+        <div className="fixed inset-0 min-h-screen bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 print:hidden">
+          <div ref={printRef} className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-8 relative font-sans print:max-w-[210mm] print:w-[210mm] print:p-6 print:shadow-none print:rounded-none print:m-0">
+            <style>
+              {`
+          @media print {
+            @page {
+              size: A4 portrait;
+              margin: 15mm;
+            }
+            body {
+              background: white !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .invoice-container {
+              width: 210mm !important;
+              max-width: 210mm !important;
+              padding: 20mm !important;
+              margin: 0 !important;
+              border: none !important;
+              border-radius: 0 !important;
+              box-shadow: none !important;
+              background: white !important;
+            }
+            .invoice-header {
+              background: #2563eb !important; /* Fallback for gradient */
+              padding: 16mm !important;
+              margin-bottom: 8mm !important;
+              border-radius: 8mm 8mm 0 0 !important;
+              color: white !important;
+            }
+            .invoice-section {
+              margin-bottom: 8mm !important;
+            }
+            .invoice-section h3 {
+              font-size: 14pt !important;
+              padding-bottom: 4mm !important;
+              margin-bottom: 4mm !important;
+              border-bottom: 1px solid #e5e7eb !important;
+            }
+            .invoice-grid {
+              display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 8mm !important;
+              font-size: 11pt !important;
+            }
+            .invoice-grid p {
+              margin: 0 !important;
+              line-height: 1.5 !important;
+            }
+            .invoice-note {
+              font-size: 10pt !important;
+              color: #6b7280 !important;
+              text-align: center !important;
+              margin-bottom: 8mm !important;
+            }
+            .print-hidden {
+              display: none !important;
+            }
+          }
+        `}
+            </style>
 
-            {/* Invoice Title and Details */}
-            <div className="text-center gap-4 mb-6">
-              <p className="flex justify-around text-md text-left font-bold" dir="ltr">
-                <span>0317-7951263 - <span dir="rtl">  گوہر خان  </span></span>
-                <span>0307-7717613 - <span dir="rtl">یٰسین خان</span></span>
-                <span>0307-7327931 - <span dir="rtl">عبدالستار </span></span>
-              </p>
-              <hr className="my-2 border-gray-300" />
-            </div>
-
-            {/* Customer and Tyre Details */}
-            <div className="flex justify-between md:grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
-              <div></div> {/* Empty div for spacing */}
-              <div className="text-right">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
-                <p><span className="font-medium"> {viewTyre.brand} : برانڈ</span></p>
-                <p><span className="font-medium">ماڈل:</span> {viewTyre.model}</p>
-                <p><span className="font-medium">سائز:</span> {viewTyre.size}</p>
+            {/* Main Invoice Container */}
+            <div className="invoice-container">
+              {/* Header */}
+              <div className="invoice-header bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-2xl flex justify-between items-center">
+                <h2 className="text-3xl font-bold print:text-2xl">Srhad Tyres Treaders</h2>
+                <div className="text-sm print:text-xs">
+                  <p>Date: <time>{viewTyre.date}</time></p>
+                </div>
               </div>
-              <div></div> {/* Empty div to push content to the right */}
-              <div className="text-right">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
-                <p><span className="font-medium"> {viewTyre.customerName || 'N/A'} : صارف کا نام </span></p>
-                <p><span className="font-medium">{viewTyre.company}  : کمپنی کا نام</span></p>
-              </div>
-            </div>
 
-            {/* Pricing Summary */}
-            <div className="mb-6">
-              <div className="text-right mb-2">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 inline-block">قیمت کا خلاصہ</h3>
+              {/* Invoice Details */}
+              <div className="invoice-section mb-6">
+                <div className="invoice-grid grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Customer Details</h3>
+                    <p><span className="font-medium">Name:</span> {viewTyre.customerName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Tire Details</h3>
+                    <p><span className="font-medium">Brand:</span> {viewTyre.brand}</p>
+                    <p><span className="font-medium">Model:</span> {viewTyre.model}</p>
+                    <p><span className="font-medium">Size:</span> {viewTyre.size}</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 text-right">
-                <p>Rs. {viewTyre.price.toFixed(2)} : </p>
-                <p className="font-medium">فی یونٹ قیمت</p>
-                <p>{viewTyre.quantity} : </p>
-                <p className="font-medium">مقدار</p>
-                <p>Rs. {viewTyre.discount || 0} : </p>
-                <p className="font-medium">رعایت</p>
-                <p>Rs. {viewTyre.due || 0} : </p>
-                <p className="font-medium">بقایا رقم</p>
-                <p className="font-bold text-lg">Rs. {(viewTyre.payableAmount || viewTyre.price * viewTyre.quantity).toLocaleString()} : </p>
-                <p className="font-bold text-lg">کل رقم </p>
+
+              {/* Pricing Summary */}
+              <div className="invoice-section mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Pricing Summary</h3>
+                <div className="invoice-grid grid grid-cols-2 gap-x-6 gap-y-3 text-gray-700">
+                  <p className="font-medium">Per Piece Price:</p>
+                  <p>Rs. {viewTyre.price.toFixed(2)}</p>
+                  <p className="font-medium">Quantity:</p>
+                  <p>{viewTyre.quantity}</p>
+                  <p className="font-medium">Discount:</p>
+                  <p>Rs. {viewTyre.discount || 0}</p>
+                  <p className="font-medium">Due Amount:</p>
+                  <p>Rs. {viewTyre.due || 0}</p>
+                  <p className="font-medium text-lg text-gray-800">Total Amount:</p>
+                  <p className="font-medium text-lg text-gray-800">Rs. {(viewTyre.payableAmount || viewTyre.price * viewTyre.quantity).toLocaleString()}</p>
+                </div>
               </div>
-            </div>
 
-            {/* Note */}
-            <div className="text-center mb-6">
-              <p className="text-sm text-gray-600">نوٹ: ہمارے ہاں ہر قسم کے گاڑیوں کے نیو امپورٹڈ ٹائر اور رم دستیاب ہیں ۔</p>
-            </div>
+              {/* Note */}
+              <div className="invoice-note text-center mb-6">
+                <p className="text-sm text-gray-500">Note: We provide a wide range of imported tires and rims for all types of vehicles.</p>
+              </div>
 
-            {/* Buttons (Hidden on Print) */}
-            <div className="flex justify-between items-center text-gray-600 text-sm print:hidden mt-6">
-              <p>Status: <span className="font-semibold text-green-600">Sold</span></p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handlePrint}
-                  className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                >
-                  Print Invoice
-                </button>
-                <button
-                  onClick={() => setViewTyre(null)}
-                  className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                >
-                  Close
-                </button>
+              {/* Buttons (Hidden on Print) */}
+              <div className="print-hidden flex justify-between items-center text-gray-600 text-sm mt-6">
+                <p>Status: <span className="font-semibold text-green-600">Sold</span></p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handlePrint}
+                    className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                  >
+                    Print Invoice
+                  </button>
+                  <button
+                    onClick={() => setViewTyre(null)}
+                    className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

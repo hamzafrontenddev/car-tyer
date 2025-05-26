@@ -519,93 +519,194 @@ const Return = () => {
       </div>
 
       {selectedReturn && (
-        <div className="fixed inset-0 min-h-screen bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative font-sans print:bg-white print:p-0 print:shadow-none"
-            id="printable"
-          >
-            <div className="relative bg-gradient-to-r from-blue-700 to-gray-800 text-white p-10 rounded-t-xl mb-0">
-              <div className="absolute text-white flex justify-center gap-8 text-md top-0 left-2 font-semibold">
-                <p>تاریخ: <time>{selectedReturn.date}</time></p>
+  <div className="fixed inset-0 min-h-screen bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-8 relative font-sans">
+      <style>
+        {`
+          @media print {
+            @page {
+              size: A4 portrait;
+              margin: 15mm; /* Page margin for A4 */
+            }
+            body {
+              background: white !important;
+              margin: 0 !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .print-only-container {
+              width: 180mm !important; /* Adjusted to fit within A4 after page margins */
+              max-width: 180mm !important;
+              padding: 10mm !important; /* Consistent padding for print */
+              margin: 0 auto !important; /* Centered on the page */
+              border: none !important;
+              border-radius: 0 !important;
+              box-shadow: none !important;
+              background: white !important;
+            }
+            .invoice-header {
+              background: #2563eb !important; /* Fallback for gradient */
+              padding: 8mm !important;
+              margin-bottom: 5mm !important;
+              border-radius: 0 !important;
+              color: white !important;
+            }
+            .invoice-section {
+              margin-bottom: 5mm !important;
+            }
+            .invoice-section h3 {
+              font-size: 11pt !important;
+              padding-bottom: 2mm !important;
+              margin-bottom: 3mm !important;
+              border-bottom: 1px solid #e5e7eb !important;
+            }
+            .invoice-grid {
+              display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 5mm !important;
+              font-size: 9pt !important;
+            }
+            .invoice-grid p {
+              margin: 0 !important;
+              line-height: 1.3 !important;
+            }
+            .invoice-note {
+              font-size: 8pt !important;
+              color: #6b7280 !important;
+              text-align: center !important;
+              margin-top: 5mm !important;
+              margin-bottom: 0 !important;
+            }
+            .screen-only {
+              display: block !important;
+            }
+            .print-only {
+              display: none !important;
+            }
+            @media print {
+              .screen-only {
+                display: none !important;
+              }
+              .print-only {
+                display: block !important;
+              }
+              .print-only-container * {
+                box-sizing: border-box !important;
+              }
+            }
+          }
+        `}
+      </style>
+
+      {/* Custom Print Function */}
+      {(() => {
+        const handlePrint = () => {
+          // Create a temporary print-only container
+          const printContent = document.createElement('div');
+          printContent.className = 'print-only print-only-container';
+
+          // Clone the invoice content (without screen-only elements)
+          const invoiceContent = document.querySelector('.print-content').cloneNode(true);
+          // Remove screen-only elements (like buttons) from the clone
+          invoiceContent.querySelectorAll('.screen-only').forEach(el => el.remove());
+          printContent.appendChild(invoiceContent);
+
+          // Append to body for printing
+          document.body.appendChild(printContent);
+
+          // Hide everything else
+          document.querySelectorAll('body > *:not(.print-only)').forEach(el => {
+            el.style.display = 'none';
+          });
+
+          // Trigger print
+          window.print();
+
+          // Restore visibility and cleanup
+          document.querySelectorAll('body > *:not(.print-only)').forEach(el => {
+            el.style.display = '';
+          });
+          document.body.removeChild(printContent);
+        };
+
+        return (
+          <div className="print-content">
+            {/* Header */}
+            <div className="invoice-header bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-2xl flex justify-between items-center">
+              <h2 className="text-3xl font-bold print:text-xl">Srhad Tyre Treaders</h2>
+              <div className="text-sm print:text-[9pt]">
+                <p>Date: <time>{selectedReturn.date}</time></p>
               </div>
-              <div className="text-center">
-                <h2 className="text-5xl font-bold">سرحد ٹائر ٹریڈرز</h2>
-              </div>
-              <div className="absolute font-bold px-5 right-50 opacity-70 bg-white rounded-xl text-black z-10 bottom-0">شیر شاہ روڈ نزد مسجد القادر ڈیرہ اڈا ملتان</div>
             </div>
 
-            <div className="text-center gap-4 mb-6">
-              <p className="flex justify-around text-md text-left font-bold" dir="ltr">
-                <span>0317-7951263 - <span dir="rtl">  گوہر خان    </span></span>
-                <span>0307-7717613 - <span dir="rtl">یٰسین خان</span></span>
-                <span>0307-7327931 - <span dir="rtl"> عبدالستار </span></span>
-              </p>
-              <hr className="my-2 border-gray-300" />
-            </div>
-
-            <div className="flex justify-between md:grid-cols-2 gap-8 mb-6 text-gray-700 text-sm">
-              <div></div>
-              <div className="text-right">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">ٹائر کی تفصیلات</h3>
-                <p><span className="font-medium">{selectedReturn.brand} : برانڈ</span></p>
-                <p><span className="font-medium">ماڈل:</span> {selectedReturn.model}</p>
-                <p><span className="font-medium">سائز:</span> {selectedReturn.size}</p>
-              </div>
-              <div className="text-right">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 mb-2">صارف کی تفصیلات</h3>
-                <p><span className="font-medium"> {selectedReturn.customer} : صارف کا نام</span></p>
-                <p><span className="font-medium"> {selectedReturn.company} : کمپنی کا نام</span></p>
+            {/* Invoice Details */}
+            <div className="invoice-section mb-6">
+              <div className="invoice-grid grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Customer Details</h3>
+                  <p><span className="font-medium">Name:</span> {selectedReturn.customer || 'N/A'}</p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Tire Details</h3>
+                  <p><span className="font-medium">Brand:</span> {selectedReturn.brand}</p>
+                  <p><span className="font-medium">Model:</span> {selectedReturn.model}</p>
+                  <p><span className="font-medium">Size:</span> {selectedReturn.size}</p>
+                </div>
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="text-right mb-2">
-                <h3 className="font-semibold text-lg border-b border-gray-300 pb-1 inline-block">قیمت کا خلاصہ</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 text-right">
+            {/* Pricing Summary */}
+            <div className="invoice-section mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Pricing Summary</h3>
+              <div className="invoice-grid grid grid-cols-2 gap-x-6 gap-y-3 text-gray-700">
+                <p className="font-medium">Original Quantity:</p>
                 <p>{selectedReturn.quantity}</p>
-                <p className="font-medium">اصل مقدار:</p>
+                <p className="font-medium">Returned Quantity:</p>
                 <p>{selectedReturn.returnQuantity}</p>
-                <p className="font-medium">واپس مقدار:</p>
+                <p className="font-medium">Price per Tire:</p>
                 <p>Rs. {selectedReturn.price}</p>
-                <p className="font-medium">فی ٹائر قیمت:</p>
+                <p className="font-medium">Return Price per Tire:</p>
                 <p>Rs. {selectedReturn.returnPrice}</p>
-                <p className="font-medium">واپس قیمت فی ٹائر:</p>
-                <p>{selectedReturn.discount || 0}</p>
-                <p className="font-medium">رعایت:</p>
+                <p className="font-medium">Discount:</p>
+                <p>Rs. {selectedReturn.discount || 0}</p>
+                <p className="font-medium">Due Amount:</p>
                 <p>Rs. {selectedReturn.due || 0}</p>
-                <p className="font-medium">بقایا رقم:</p>
-                <p className="font-bold text-lg">Rs. {selectedReturn.returnTotalPrice}</p>
-                <p className="font-bold text-lg">کل قیمت:</p>
+                <p className="font-medium text-lg text-gray-800 print:text-base">Total Return Amount:</p>
+                <p className="font-medium text-lg text-gray-800 print:text-base">Rs. {selectedReturn.returnTotalPrice}</p>
               </div>
             </div>
 
-            <div className="text-center mb-6">
-              <p className="text-sm text-gray-600">نوٹ: ہمارے ہاں ہر قسم کے گاڑیوں کے نیو امپورٹڈ ٹائر اور رم دستیاب ہیں ۔</p>
+            {/* Note */}
+            <div className="invoice-note text-center mb-6">
+              <p className="text-sm text-gray-500">Note: We provide a wide range of imported tires and rims for all types of vehicles.</p>
             </div>
 
-            <div className="flex justify-between items-center text-gray-600 text-sm print:hidden mt-6">
+            {/* Buttons (Hidden on Print) */}
+            <div className="screen-only flex justify-between items-center text-gray-600 text-sm mt-6">
               <p>Status: <span className="font-semibold text-green-600">Returned</span></p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => window.print()}
-                  className="bg-green-600 hover:bg-green-700 transition text-white px-5 py-2 rounded-md shadow"
+                  onClick={handlePrint}
+                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
                   aria-label="Print Invoice"
                 >
-                  🖨️ Print
+                  Print Invoice
                 </button>
                 <button
                   onClick={() => setSelectedReturn(null)}
-                  className="bg-red-600 hover:bg-red-700 transition text-white px-5 py-2 rounded-md shadow"
+                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
                   aria-label="Close Invoice"
                 >
-                  ❌ Close
+                  Close
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
+    </div>
+  </div>
+)}
     </div>
   );
 };
