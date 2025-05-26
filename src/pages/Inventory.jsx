@@ -321,7 +321,7 @@ const Dashboard = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100 text-left">
             <tr>
-              <th className="p-3 font-medium">Company</th>
+              <th className="p-3 font-medium">Party</th>
               <th className="p-3 font-medium">Brand</th>
               <th className="p-3 font-medium">Size</th>
               <th className="p-3 font-medium">Model</th>

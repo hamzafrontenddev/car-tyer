@@ -257,7 +257,7 @@ const BuyTyre = () => {
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 font-semibold">Company</th>
+              <th className="py-2 px-4 font-semibold">Party</th>
               <th className="py-2 px-4 font-semibold">Brand</th>
               <th className="py-2 px-4 font-semibold">Model</th>
               <th className="py-2 px-4 font-semibold">Size</th>

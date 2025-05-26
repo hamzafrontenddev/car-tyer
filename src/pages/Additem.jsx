@@ -471,7 +471,7 @@ const AddItem = () => {
           <table className="min-w-full bg-white border rounded">
             <thead>
               <tr className="bg-gray-100 text-left">
-                <th className="py-2 px-4 border">Company</th>
+                <th className="py-2 px-4 border">Party</th>
                 <th className="py-2 px-4 border">Brand</th>
                 <th className="py-2 px-4 border">Model</th>
                 <th className="py-2 px-4 border">Size</th>
