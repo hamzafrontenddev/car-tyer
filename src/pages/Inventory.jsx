@@ -120,13 +120,10 @@ const Dashboard = () => {
       };
       entry.bought += parseInt(item.quantity, 10) || 0;
       entry.store += parseInt(item.store, 10) || 0;
-      entry.shop += parseInt(item.shop, 10) || 0; // Accumulate shop quantity
+      entry.shop += parseInt(item.shop, 10) || 0; // Accumulate shop quantity directly from buyData
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
-
-    // Log the map after buy data to verify shop quantity initialization
-    console.log("Map after buy data:", Array.from(map.entries()));
 
     // Process sales
     filteredSell.forEach((item) => {
@@ -148,14 +145,10 @@ const Dashboard = () => {
       }
       const soldQty = parseInt(item.quantity, 10) || 0;
       entry.sold += soldQty;
-      // Deduct from shop quantity, ensuring it doesn't go below 0
-      entry.shop = Math.max(entry.shop - soldQty, 0);
+      // Removed manual shop deduction since it's already updated in purchasedTyres
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
-
-    // Log the map after sell data to verify shop quantity deduction
-    console.log("Map after sell data:", Array.from(map.entries()));
 
     // Process returns
     filteredReturns.forEach((item) => {
@@ -178,8 +171,7 @@ const Dashboard = () => {
       const returnQty = parseInt(item.returnQuantity, 10) || 0;
       entry.returned += returnQty;
       entry.sold = Math.max(entry.sold - returnQty, 0);
-      // Add back to shop quantity on return
-      entry.shop += returnQty;
+      // Removed manual shop addition since it's already updated in purchasedTyres
       entry.latestDate = new Date(Math.max(new Date(item.date).getTime(), entry.latestDate.getTime()));
       map.set(key, entry);
     });
@@ -201,9 +193,6 @@ const Dashboard = () => {
         item.model?.toLowerCase().includes(query)
       );
     }
-
-    // Log the final summary to verify shop quantities
-    console.log("Final Stock Summary:", summary);
 
     setStockSummary(summary);
   }, [buyData, sellData, returnData, selectedBrand, startDate, endDate, selectedDate, searchQuery]);

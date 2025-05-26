@@ -233,27 +233,25 @@ const SellTyre = () => {
         // Fetch shopQuantity from purchasedTyres with updated form values
         const fetchShopQuantity = async () => {
           const querySize = updatedForm.size || firstMatch.size || "";
-          console.log("Query Inputs:", {
-            company: updatedForm.company.trim().toLowerCase(),
-            brand: updatedForm.brand.trim().toLowerCase(),
-            model: model.trim().toLowerCase(),
-            size: querySize.toLowerCase()
-          }); // Debugging
           const purchasedQuery = query(
             collection(db, "purchasedTyres"),
             where("company", "==", updatedForm.company.trim()),
             where("brand", "==", updatedForm.brand.trim()),
             where("model", "==", model.trim()),
-            where("size", "==", querySize)
+            where("size", "==", querySize.trim())
           );
-          const purchasedSnapshot = await getDocs(purchasedQuery);
-          const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
-          console.log("Purchased Tyres:", purchasedTyres); // Debugging
-          const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
-          setForm((prevForm) => ({
-            ...prevForm,
-            shopQuantity: totalShopQty.toString(),
-          }));
+          try {
+            const purchasedSnapshot = await getDocs(purchasedQuery);
+            const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
+            const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
+            setForm((prevForm) => ({
+              ...prevForm,
+              shopQuantity: totalShopQty.toString(),
+            }));
+          } catch (error) {
+            console.error("Error fetching shop quantity:", error);
+            toast.error("Failed to fetch shop quantity");
+          }
         };
         fetchShopQuantity();
 
@@ -286,18 +284,23 @@ const SellTyre = () => {
       const fetchShopQuantity = async () => {
         const purchasedQuery = query(
           collection(db, "purchasedTyres"),
-          where("company", "==", form.company),
-          where("brand", "==", form.brand),
-          where("model", "==", form.model),
-          where("size", "==", size)
+          where("company", "==", form.company.trim()),
+          where("brand", "==", form.brand.trim()),
+          where("model", "==", form.model.trim()),
+          where("size", "==", size.trim())
         );
-        const purchasedSnapshot = await getDocs(purchasedQuery);
-        const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
-        const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
-        setForm((prev) => ({
-          ...prev,
-          shopQuantity: totalShopQty.toString(),
-        }));
+        try {
+          const purchasedSnapshot = await getDocs(purchasedQuery);
+          const purchasedTyres = purchasedSnapshot.docs.map((doc) => doc.data());
+          const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
+          setForm((prev) => ({
+            ...prev,
+            shopQuantity: totalShopQty.toString(),
+          }));
+        } catch (error) {
+          console.error("Error fetching shop quantity:", error);
+          toast.error("Failed to fetch shop quantity");
+        }
       };
       fetchShopQuantity();
     } else {
@@ -314,6 +317,12 @@ const SellTyre = () => {
     const enteredQty = parseInt(form.quantity);
     if (enteredQty <= 0) {
       toast.error("Quantity must be greater than 0");
+      return;
+    }
+
+    const shopQty = parseInt(form.shopQuantity) || 0;
+    if (enteredQty > shopQty) {
+      toast.error(`❌ Only ${shopQty} tyres available in shop. Cannot sell more than that.`);
       return;
     }
 
@@ -344,70 +353,39 @@ const SellTyre = () => {
         return;
       }
 
-      // Fetch purchasedTyres to check and update shop and store quantities
+      // Fetch purchasedTyres to update shop quantity
       const purchasedQuery = query(
         collection(db, "purchasedTyres"),
-        where("company", "==", form.company),
-        where("brand", "==", form.brand),
-        where("model", "==", form.model),
-        where("size", "==", form.size)
+        where("company", "==", form.company.trim()),
+        where("brand", "==", form.brand.trim()),
+        where("model", "==", form.model.trim()),
+        where("size", "==", form.size.trim())
       );
-      const purchasedSnapshot = await getDocs(purchasedQuery);
-      const purchasedTyres = purchasedSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      try {
+        const purchasedSnapshot = await getDocs(purchasedQuery);
+        const purchasedTyres = purchasedSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      const totalShopQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.shop) || 0), 0);
-      const totalStoreQty = purchasedTyres.reduce((acc, curr) => acc + (parseInt(curr.store) || 0), 0);
-
-      if (enteredQty > totalShopQty) {
-        toast.error(`❌ Only ${totalShopQty} tyres available in shop. Cannot sell more than that.`);
-        return;
-      }
-
-      if (enteredQty > totalStoreQty) {
-        toast.error(`❌ Only ${totalStoreQty} tyres available in store. Cannot sell more than that.`);
-        return;
-      }
-
-      // Update shop quantity
-      let remainingQty = enteredQty;
-      for (const tyre of purchasedTyres) {
-        if (remainingQty <= 0) break;
-        const currentShop = parseInt(tyre.shop) || 0;
-        const deductQty = Math.min(currentShop, remainingQty);
-        if (deductQty > 0) {
-          await updateDoc(doc(db, "purchasedTyres", tyre.id), {
-            shop: currentShop - deductQty,
-          });
-          console.log(`Deducted ${deductQty} from shop quantity for tyre ID: ${tyre.id}`); // Debugging
-          remainingQty -= deductQty;
+        // Update shop quantity
+        let remainingQty = enteredQty;
+        for (const tyre of purchasedTyres) {
+          if (remainingQty <= 0) break;
+          const currentShop = parseInt(tyre.shop) || 0;
+          const deductQty = Math.min(currentShop, remainingQty);
+          if (deductQty > 0) {
+            await updateDoc(doc(db, "purchasedTyres", tyre.id), {
+              shop: currentShop - deductQty,
+            });
+            remainingQty -= deductQty;
+          }
         }
+      } catch (error) {
+        console.error("Error updating shop quantity:", error);
+        toast.error("Failed to update shop quantity");
+        return;
       }
-
-      // Skipping store quantity addition to fix bug
-      if (enteredQty > 0) {
-        // const targetTyre = purchasedTyres[0];
-        // const currentStore = parseInt(targetTyre.store) || 0;
-        // await updateDoc(doc(db, "purchasedTyres", targetTyre.id), {
-        //   store: currentStore + enteredQty,
-        // });
-      }
-
-      // Skipping store quantity deduction to fix bug
-      remainingQty = enteredQty;
-      // for (const tyre of purchasedTyres) {
-      //   if (remainingQty <= 0) break;
-      //   const currentStore = parseInt(tyre.store) || 0;
-      //   const deductQty = Math.min(currentStore, remainingQty);
-      //   if (deductQty > 0) {
-      //     await updateDoc(doc(db, "purchasedTyres", tyre.id), {
-      //       store: currentStore - deductQty,
-      //     });
-      //     remainingQty -= deductQty;
-      //   }
-      // }
     }
 
     const originalPrice = parseFloat(form.price);
@@ -471,7 +449,7 @@ const SellTyre = () => {
       setAvailableSizes([]);
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Operation failed");
+      toast.error("Operation failed: " + error.message);
     }
   };
 
