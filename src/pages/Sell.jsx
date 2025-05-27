@@ -54,6 +54,7 @@ const SellTyre = () => {
   const itemsPerPage = 5;
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
   const handlePrint = () => {
     if (printRef.current) {
@@ -308,7 +309,7 @@ const SellTyre = () => {
     }
   };
 
-  const handleSellTyre = async () => {
+  const confirmSellTyre = async () => {
     if (!form.company || !form.brand || !form.model || !form.size || !form.price || !form.quantity) {
       toast.error("Please fill all fields");
       return;
@@ -320,13 +321,14 @@ const SellTyre = () => {
       return;
     }
 
-    const shopQty = parseInt(form.shopQuantity) || 0;
-    if (enteredQty > shopQty) {
-      toast.error(`❌ Only ${shopQty} tyres available in shop. Cannot sell more than that.`);
-      return;
-    }
-
+    // Skip quantity checks during edit
     if (!editId) {
+      const shopQty = parseInt(form.shopQuantity) || 0;
+      if (enteredQty > shopQty) {
+        toast.error(`❌ Only ${shopQty} tyres available in shop. Cannot sell more than that.`);
+        return;
+      }
+
       const matchedItems = itemTyres.filter(
         (t) =>
           t.company?.toLowerCase() === form.company.toLowerCase() &&
@@ -421,7 +423,11 @@ const SellTyre = () => {
 
     try {
       if (editId) {
-        await updateDoc(doc(db, "soldTyres", editId), newTyre);
+        await updateDoc(doc(db, "soldTyres", editId), {
+          ...newTyre,
+          due: due,
+          payableAmount: payableAmount,
+        });
         toast.success("Tyre updated");
         setEditId(null);
         setEditingTyre(null);
@@ -451,6 +457,20 @@ const SellTyre = () => {
       console.error("Error:", error);
       toast.error("Operation failed: " + error.message);
     }
+  };
+
+  const handleSellTyre = () => {
+    // Show the confirmation popup instead of directly selling
+    setShowConfirmPopup(true);
+  };
+
+  const handleConfirmSell = () => {
+    setShowConfirmPopup(false);
+    confirmSellTyre();
+  };
+
+  const handleCancelSell = () => {
+    setShowConfirmPopup(false);
   };
 
   const filteredTyres = sellTyres.filter((tyre) =>
@@ -597,6 +617,35 @@ const SellTyre = () => {
       >
         {editId ? "Update Tyre" : "Sell Tyre"}
       </button>
+
+      {/* Confirmation Popup */}
+      {showConfirmPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Confirm Customer Information</h3>
+            <div className="mb-4">
+              <p className="text-gray-700">
+                <span className="font-medium">Customer Name:</span> {customerName || "N/A"}
+              </p>
+              <p className="text-gray-700 mt-2">Is this information correct?</p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelSell}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+              >
+                No
+              </button>
+              <button
+                onClick={handleConfirmSell}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="mt-10 flex justify-between items-center">
@@ -806,9 +855,9 @@ const SellTyre = () => {
             <div className="invoice-container">
               {/* Header */}
               <div className="invoice-header bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-2xl flex justify-between items-center">
-                <h2 className="text-3xl font-bold print:text-2xl">Srhad Tyres Treaders</h2>
+                <h2 className="text-3xl font-bold print:text-2xl text-center">Srhad Tyres Treaders</h2>
                 <div className="text-sm print:text-xs">
-                  <p>Date: <time>{viewTyre.date}</time></p>
+                  <p className="text-center"> Date: <time>{viewTyre.date}</time></p>
                 </div>
               </div>
 
@@ -817,7 +866,7 @@ const SellTyre = () => {
                 <div className="invoice-grid grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Customer Details</h3>
-                    <p><span className="font-medium">Name:</span> {viewTyre.customerName || 'N/A'}</p>
+                    <p><span className="font-medium">Customer Name:</span> {viewTyre.customerName || 'N/A'}</p>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Tire Details</h3>

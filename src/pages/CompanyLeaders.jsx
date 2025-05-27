@@ -90,7 +90,7 @@ const CompanyLeaders = () => {
         totalItems: companyMap[company].totalItems,
         totalCost,
         totalPaid,
-        due: parseFloat(due) >= 0 ? parseFloat(due) : 0, // Ensure due is non-negative
+        due: parseFloat(due) >= 0 ? parseFloat(due) : 0,
         discountAmount,
         brands: companyMap[company].brands,
       };
@@ -104,48 +104,55 @@ const CompanyLeaders = () => {
   const getBrandSummary = (companyName) => {
     const company = companySummary.find(item => item.company === companyName);
     if (!company) return [];
-    const brandSummary = Object.keys(company.brands)
-      .map(brand => {
-        const details = brandDetails.find(detail => detail.companyName === companyName && detail.brand === brand) || {};
-        const brandDates = Array.from(company.brands[brand].dates);
+
+    // Group by brand and size to create separate entries
+    const brandSizeMap = {};
+
+    buyData
+      .filter(item => item.company === companyName)
+      .forEach(item => {
+        const itemDate = item.date instanceof Date ? item.date : new Date(item.date);
         const startDate = brandFilterDates.startDate;
         const endDate = brandFilterDates.endDate;
-        let filteredItems = company.brands[brand].totalItems;
-        let filteredCost = company.brands[brand].totalCost;
-        let filteredSizes = Array.from(company.brands[brand].sizes);
-        let filteredPurchaseDates = brandDates;
+        const brand = item.brand;
+        const size = item.size || 'N/A';
 
+        // Apply date filter if both start and end dates are provided
         if (startDate && endDate) {
-          filteredItems = 0;
-          filteredCost = 0;
-          filteredSizes = new Set();
-          filteredPurchaseDates = [];
-          buyData
-            .filter(item => item.company === companyName && item.brand === brand)
-            .forEach(item => {
-              const itemDate = item.date instanceof Date ? item.date : new Date(item.date);
-              if (itemDate >= startDate && itemDate <= endDate) {
-                filteredItems += item.quantity;
-                filteredCost += item.price * item.quantity;
-                if (item.size) filteredSizes.add(item.size);
-                filteredPurchaseDates.push(item.date.toISOString().split('T')[0]);
-              }
-            });
-          filteredSizes = Array.from(filteredSizes);
+          if (!(itemDate >= startDate && itemDate <= endDate)) return;
         }
 
+        const key = `${brand}-${size}`;
+        if (!brandSizeMap[key]) {
+          brandSizeMap[key] = {
+            brand,
+            size,
+            totalItems: 0,
+            totalCost: 0,
+            dates: new Set(),
+          };
+        }
+
+        brandSizeMap[key].totalItems += item.quantity;
+        brandSizeMap[key].totalCost += item.price * item.quantity;
+        if (item.date) brandSizeMap[key].dates.add(item.date.toISOString().split('T')[0]);
+      });
+
+    const brandSummary = Object.values(brandSizeMap)
+      .map(entry => {
+        const details = brandDetails.find(detail => detail.companyName === companyName && detail.brand === entry.brand) || {};
         return {
-          brand,
-          totalItems: filteredItems,
-          totalCost: filteredCost,
+          brand: entry.brand,
+          totalItems: entry.totalItems,
+          totalCost: entry.totalCost,
           totalPaid: parseFloat(details.totalPaid) || 0,
           due: parseFloat(details.due) || 0,
           totalReturn: parseFloat(details.totalReturn) || 0,
-          sizes: filteredSizes.join(', ') || 'N/A',
-          date: filteredPurchaseDates.sort().join(', ') || 'N/A',
+          sizes: entry.size,
+          date: Array.from(entry.dates).sort().join(', ') || 'N/A',
         };
       })
-      .filter(brand => brand.brand.toLowerCase().includes(brandSearchQuery.toLowerCase()));
+      .filter(entry => entry.brand.toLowerCase().includes(brandSearchQuery.toLowerCase()));
 
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
@@ -155,10 +162,21 @@ const CompanyLeaders = () => {
   const totalBrandPages = (companyName) => {
     const company = companySummary.find(item => item.company === companyName);
     if (!company) return 1;
-    const filteredBrands = Object.keys(company.brands).filter(brand =>
-      brand.toLowerCase().includes(brandSearchQuery.toLowerCase())
-    );
-    return Math.ceil(filteredBrands.length / rowsPerPage);
+
+    // Count unique brand-size combinations for pagination
+    const brandSizeSet = new Set();
+    buyData
+      .filter(item => item.company === companyName)
+      .forEach(item => {
+        const brand = item.brand;
+        const size = item.size || 'N/A';
+        const key = `${brand}-${size}`;
+        if (brand.toLowerCase().includes(brandSearchQuery.toLowerCase())) {
+          brandSizeSet.add(key);
+        }
+      });
+
+    return Math.ceil(brandSizeSet.size / rowsPerPage);
   };
 
   const getBrandsForCompany = (companyName) => {
@@ -226,7 +244,7 @@ const CompanyLeaders = () => {
       return;
     }
 
-    const todayDate = new Date().toISOString().split('T')[0]; // Today's date: 2025-05-22
+    const todayDate = new Date().toISOString().split('T')[0];
 
     try {
       if (companyExists) {
@@ -557,7 +575,7 @@ const CompanyLeaders = () => {
             <label className="block text-sm font-medium mb-1 text-gray-700">Due</label>
             <input
               type="number"
-              name="due"
+              name="due хранения"
               value={companyFormData.due}
               className="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-xl"
               readOnly
