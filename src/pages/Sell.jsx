@@ -71,6 +71,13 @@ const SellTyre = () => {
   useEffect(() => {
     const unsubSell = onSnapshot(collection(db, "soldTyres"), (snapshot) => {
       let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      // Sort by createdAt in descending order (newest first)
+      data = data.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
+      // Apply date range filter after sorting
       data = filterByDateRange(data, startDate, endDate);
       setSellTyres(data);
     });
@@ -414,7 +421,7 @@ const SellTyre = () => {
       price: discountedPrice,
       quantity: enteredQty,
       status: "Sold",
-      createdAt: new Date(),
+      createdAt: editId ? form.createdAt || new Date() : new Date(), // Preserve createdAt on edit, set new on add
       discount,
       due,
       payableAmount,
@@ -747,6 +754,7 @@ const SellTyre = () => {
                           due: tyre.due || "",
                           shopQuantity: "",
                           comment: tyre.comment || "",
+                          createdAt: tyre.createdAt || new Date(), // Preserve createdAt for editing
                         });
                         setEditId(tyre.id);
                         setCustomerName(tyre.customerName || '');

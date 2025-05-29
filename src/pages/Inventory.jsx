@@ -181,8 +181,12 @@ const Dashboard = () => {
       stock: Math.max(item.bought - item.sold, 0),
     }));
 
-    // Sort summary by latestDate in descending order (latest first)
-    summary.sort((a, b) => b.latestDate.getTime() - a.latestDate.getTime());
+    // Sort summary by latestDate in descending order (latest first), with fallback for missing dates
+    summary.sort((a, b) => {
+      const dateA = a.latestDate ? new Date(a.latestDate) : new Date(0);
+      const dateB = b.latestDate ? new Date(b.latestDate) : new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();

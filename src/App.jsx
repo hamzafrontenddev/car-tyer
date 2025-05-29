@@ -12,6 +12,7 @@ import CompanyLeaders from "./pages/CompanyLeaders";
 import ProfitLoss from "./pages/ProfitLoss";
 import Transfer from "./pages/Transfer";
 import PendingDues from "./pages/PendingDues";
+import CustomerLedger from "./pages/CustomerLedger";
 import Login from "./components/Login";
 
 // PrivateRoute component to protect routes
@@ -171,6 +172,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             Companies
           </NavLink>
           <NavLink
+            to="/customer-ledger"
+            className={({ isActive }) =>
+              `font-semibold transition duration-200 px-4 py-2 rounded ${
+                isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-blue-100 hover:text-blue-500"
+              }`
+            }
+            onClick={toggleSidebar}
+          >
+            Customer Ledger
+          </NavLink>
+          <NavLink
             to="/profit-loss"
             className={({ isActive }) =>
               `font-semibold transition duration-200 px-4 py-2 rounded ${
@@ -264,6 +276,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <CompanyLeaders />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/customer-ledger"
+              element={
+                <PrivateRoute>
+                  <CustomerLedger />
                 </PrivateRoute>
               }
             />

@@ -32,7 +32,7 @@ const Login = () => {
 
     setErrors(newErrors);
     return isValid;
-  }:
+  };
   const handleLogin = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
